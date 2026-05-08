@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  /* Paleta Carla Bruni: grises + dorado #D6BA8A */
+  --background: #3a3b3c;
+  --foreground: #f2f2f2;
+  --soft-gray: #939396;
+  --premium-gold: #d6ba8a;
+  --accent-coral: #7e7f81;
+  --accent-orange: #a09072;
+  --surface-raised: #595b5a;
+  --border-subtle: #c9caca33;
+  /* Texto sobre botones rellenos en tono dorado */
+  --on-accent: #2a2928;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-soft-gray: var(--soft-gray);
+  --color-premium-gold: var(--premium-gold);
+  --color-accent-coral: var(--accent-coral);
+  --color-accent-orange: var(--accent-orange);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-montserrat), sans-serif;
+}
+
+.font-heading {
+  font-family: var(--font-playfair), serif;
+}
