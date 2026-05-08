@@ -1,5 +1,5 @@
 /**
- * Genera favicons, iconos PWA y og:image desde public/logo_marce.png
+ * Genera favicons, iconos PWA y og:image desde public/logo.jpeg
  * Uso: npm run icons
  */
 import fs from "node:fs";
@@ -9,11 +9,12 @@ import sharp from "sharp";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
-const input = path.join(root, "public", "logo_marce.png");
+const input = path.join(root, "public", "logo.jpeg");
 const outDir = path.join(root, "public");
 
 const WHITE = { r: 255, g: 255, b: 255, alpha: 1 };
-const SPLASH_BG = { r: 17, g: 17, b: 17, alpha: 1 };
+/** Fondo OG alineado a la app (--background aprox.) */
+const SPLASH_BG = { r: 106, g: 107, b: 109, alpha: 1 };
 
 function pipeline() {
   return sharp(input).rotate();
@@ -26,12 +27,12 @@ async function ensureSourceLogo() {
   );
   const svg = Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-      <rect width="512" height="512" fill="#111111"/>
-      <circle cx="256" cy="256" r="168" fill="none" stroke="#e4c48f" stroke-width="28"/>
-      <text x="256" y="280" text-anchor="middle" font-family="Georgia,serif" font-size="120" fill="#e4c48f">MP</text>
+      <rect width="512" height="512" fill="#6a6b6d"/>
+      <circle cx="256" cy="256" r="168" fill="none" stroke="#d6ba8a" stroke-width="28"/>
+      <text x="256" y="288" text-anchor="middle" font-family="Georgia,serif" font-size="96" fill="#d6ba8a">CB</text>
     </svg>`,
   );
-  await sharp(svg).png().toFile(input);
+  await sharp(svg).jpeg({ quality: 92 }).toFile(input);
 }
 
 async function paddedSquare(size, filename) {

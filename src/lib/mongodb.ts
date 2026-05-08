@@ -28,6 +28,6 @@ function getClientPromise(): Promise<MongoClient> {
 
 export async function getDb() {
   const client = await getClientPromise();
-  const name = process.env.MONGODB_DB ?? "marcelo_ponzio_estilista";
+  const name = process.env.MONGODB_DB ?? "carla_bruni_espacio_freyja";
   return client.db(name);
 }

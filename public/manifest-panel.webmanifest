@@ -1,12 +1,12 @@
 {
   "id": "/panel-turnos?app=v1",
-  "name": "Panel MP Estilista",
-  "short_name": "Panel MP",
+  "name": "Panel · Carla Bruni · Espacio Freyja",
+  "short_name": "Panel Freyja",
   "start_url": "/panel-turnos",
   "scope": "/panel-turnos/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#6a6b6d",
+  "theme_color": "#d6ba8a",
   "icons": [
     {
       "src": "/icon-192.png?panel=v2",

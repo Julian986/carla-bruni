@@ -15,7 +15,7 @@ const SPLASH_AFTER_LOAD_MS = 90;
 
 function SplashScreen({ onLogoReady }: { onLogoReady: () => void }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)] text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--background)] text-[var(--foreground)]">
       <div className="flex w-full max-w-md flex-col items-center px-6">
         {/* Logo */}
         <div className="mb-8 text-center">
@@ -48,8 +48,8 @@ function SplashScreen({ onLogoReady }: { onLogoReady: () => void }) {
 
 function HomeContent() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[var(--background)] text-white">
-      {/* Fondo con foto: solo hasta md — en pantallas anchas el cover recorta mal una portada vertical */}
+    <div className="relative min-h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+      {/* Fondo con foto: solo hasta md — en pantallas anchas el cover recorta mal una imagen vertical */}
       <div className="fixed top-0 right-0 left-0 z-0 h-[100svh] md:hidden">
         <Image
           src={HOME_HERO_IMAGE_URL}
@@ -59,39 +59,35 @@ function HomeContent() {
           fetchPriority="high"
           sizes="100vw"
           quality={80}
-          className="object-cover object-[center_35%]"
+          className="object-cover object-[center_35%] max-md:opacity-[0.5]"
           aria-hidden
         />
       </div>
 
-      {/* Degradado sobre la foto (solo móvil) */}
+      {/* Móvil: foto muy apagada pero perceptible — veladura un poco más liviana que antes */}
       <div
-        className="fixed top-0 right-0 left-0 z-10 h-[100svh] md:hidden"
+        className="pointer-events-none fixed top-0 right-0 left-0 z-10 h-[100svh] md:hidden"
         style={{
           backgroundImage:
-            "linear-gradient(to bottom, rgba(58,59,60,0.98) 0%, rgba(58,59,60,0.88) 16%, rgba(58,59,60,0.48) 38%, rgba(58,59,60,0.22) 54%, rgba(58,59,60,0.62) 68%, rgba(58,59,60,0.94) 84%, rgba(58,59,60,1) 100%)",
+            "linear-gradient(to bottom, rgba(58,59,60,0.82) 0%, rgba(58,59,60,0.7) 28%, rgba(58,59,60,0.64) 52%, rgba(58,59,60,0.72) 78%, rgba(58,59,60,0.82) 100%)",
         }}
       />
 
-      {/* Tablet / escritorio: sin foto, fondo editorial coherente con la app */}
+      {/* Escritorio: base sólida + un halo dorado muy leve */}
       <div
         aria-hidden
         className="fixed top-0 right-0 left-0 z-0 hidden h-[100svh] bg-[var(--background)] md:block"
         style={{
-          backgroundImage: [
-            "radial-gradient(ellipse 120% 70% at 50% -15%, rgba(214,186,138,0.12), transparent 52%)",
-            "radial-gradient(ellipse 80% 55% at 100% 40%, rgba(147,147,150,0.08), transparent 45%)",
-            "radial-gradient(ellipse 60% 50% at 0% 75%, rgba(214,186,138,0.05), transparent 42%)",
-            "linear-gradient(to bottom, #3f4042 0%, #3a3b3c 38%, #353637 100%)",
-          ].join(","),
+          backgroundImage:
+            "radial-gradient(ellipse 110% 65% at 50% -10%, rgba(214,186,138,0.09), transparent 48%), linear-gradient(to bottom, #3d3e40 0%, var(--background) 42%, #353637 100%)",
         }}
       />
 
-      <main className="relative z-20 mx-auto min-h-screen w-full max-w-md px-5 pt-20 pb-28">
+      <main className="relative z-20 mx-auto min-h-screen w-full max-w-md px-5 pt-14 pb-28 md:pt-20">
         <header className="flex justify-center">
-          <div className="inline-flex flex-col items-center gap-1 text-center">
+          <div className="inline-flex max-w-full flex-col items-center gap-1 text-center max-md:[text-shadow:0_1px_8px_rgba(0,0,0,0.35)] md:[text-shadow:none]">
             <BrandLogo size="header" />
-            <div className="text-center text-[22px] font-medium leading-tight tracking-[0.1em] text-white font-heading">
+            <div className="text-center text-[22px] font-medium leading-tight tracking-[0.1em] text-[var(--foreground)] font-heading">
               <span className="block">CARLA BRUNI</span>
               <span className="mt-0.5 block text-[15px] font-normal tracking-[0.14em] text-[var(--soft-gray)]/95">
                 Dermocosmetóloga y esteticista
@@ -101,25 +97,25 @@ function HomeContent() {
           </div>
         </header>
 
-        <div className="mt-[31vh] space-y-4 md:mt-14">
+        <div className="mt-12 space-y-4 md:mt-14">
           <section className="pb-1">
             <h1 className="sr-only">Carla Bruni · Espacio Freyja</h1>
             <div className="mx-auto flex w-[84%] flex-col gap-3">
               <Link
                 href="/turnos"
-                className="flex h-[52px] items-center justify-center rounded-full bg-[var(--premium-gold)] px-6 text-[16px] font-semibold tracking-[0.14em] text-[var(--on-accent)] shadow-[0_16px_36px_rgba(0,0,0,0.45)]"
+                className="flex h-[52px] items-center justify-center rounded-full bg-[var(--premium-gold)] px-6 text-[16px] font-semibold tracking-[0.14em] text-[var(--on-accent)] shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
               >
                 Reservar turno
               </Link>
               <Link
                 href="/tratamientos"
-                className="flex h-[52px] items-center justify-center rounded-full border border-white/8 bg-black/45 px-6 text-[15px] font-medium tracking-[0.14em] text-white backdrop-blur-[10px]"
+                className="flex h-[52px] items-center justify-center rounded-full border border-white/12 bg-[rgba(0,0,0,0.28)] px-6 text-[15px] font-medium tracking-[0.14em] text-[var(--foreground)] backdrop-blur-[8px] md:border-[color-mix(in_srgb,var(--premium-gold)_35%,transparent)] md:bg-[color-mix(in_srgb,var(--surface-raised)_88%,transparent)] md:backdrop-blur-0"
               >
                 Tratamientos
               </Link>
               <Link
                 href="/promociones"
-                className="flex h-[52px] items-center justify-center rounded-full border border-white/8 bg-black/45 px-6 text-[15px] font-medium tracking-[0.14em] text-white backdrop-blur-[10px]"
+                className="flex h-[52px] items-center justify-center rounded-full border border-white/12 bg-[rgba(0,0,0,0.28)] px-6 text-[15px] font-medium tracking-[0.14em] text-[var(--foreground)] backdrop-blur-[8px] md:border-[color-mix(in_srgb,var(--premium-gold)_35%,transparent)] md:bg-[color-mix(in_srgb,var(--surface-raised)_88%,transparent)] md:backdrop-blur-0"
               >
                 Promociones
               </Link>
@@ -129,7 +125,7 @@ function HomeContent() {
           <section className="mx-auto w-[84%] space-y-3">
             <Link
               href="/contacto"
-              className="flex h-[52px] w-full items-center justify-center rounded-full border border-white/8 bg-black/45 px-6 text-[15px] font-medium tracking-[0.14em] text-white backdrop-blur-[10px]"
+              className="flex h-[52px] w-full items-center justify-center rounded-full border border-white/12 bg-[rgba(0,0,0,0.28)] px-6 text-[15px] font-medium tracking-[0.14em] text-[var(--foreground)] backdrop-blur-[8px] md:border-[color-mix(in_srgb,var(--premium-gold)_35%,transparent)] md:bg-[color-mix(in_srgb,var(--surface-raised)_88%,transparent)] md:backdrop-blur-0"
             >
               Contacto
             </Link>
@@ -139,11 +135,11 @@ function HomeContent() {
             <div className="mb-3 text-[10px] tracking-[0.24em] text-[var(--soft-gray)]/70">
               PROMOCION DESTACADA DEL MES
             </div>
-            <div className="rounded-[28px] border border-[var(--border-subtle)] bg-black/40 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.35)] backdrop-blur-[14px]">
+            <div className="rounded-[28px] border border-white/10 bg-[rgba(0,0,0,0.3)] p-4 shadow-[0_12px_28px_rgba(0,0,0,0.2)] backdrop-blur-[10px] md:border-[var(--border-subtle)] md:bg-[color-mix(in_srgb,var(--surface-raised)_92%,transparent)] md:backdrop-blur-[6px]">
               <div className="text-[10px] tracking-[0.24em] text-[var(--premium-gold)]">
                 DESTACADO
               </div>
-              <h2 className="mt-2 text-lg leading-tight text-white font-heading">
+              <h2 className="mt-2 text-lg leading-tight text-[var(--foreground)] font-heading">
                 Consulta, análisis y primera piel
               </h2>
               <p className="mt-2 text-xs leading-relaxed text-[var(--soft-gray)]">
@@ -165,34 +161,31 @@ function HomeContent() {
         </div>
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-30">
-        <div className="flex w-full items-center justify-between border-t border-[var(--border-subtle)] bg-black/50 px-4 py-2.5 backdrop-blur-[16px]">
-          <button className="flex min-w-0 flex-1 flex-col items-center gap-1">
+      {/* Barra inferior: fondo sólido (sin backdrop-blur: evita halo / “luz” sobre el contenido) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 isolate">
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-full block h-14 bg-gradient-to-t from-[var(--background)] to-transparent md:hidden"
+          aria-hidden
+        />
+        <div className="flex w-full items-center justify-between border-t border-white/12 bg-[var(--background)] px-4 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-[0_-10px_28px_rgba(0,0,0,0.35)] md:border-[var(--border-subtle)] md:bg-[var(--background)] md:shadow-[0_-6px_20px_rgba(0,0,0,0.22)]">
+          <button type="button" className="flex min-w-0 flex-1 flex-col items-center gap-1">
             <HomeIcon className="h-5 w-5 text-[var(--premium-gold)]" strokeWidth={1.9} />
-            <span className="text-[9px] tracking-[0.12em] text-[var(--premium-gold)]">
-              Inicio
-            </span>
+            <span className="text-[9px] tracking-[0.12em] text-[var(--premium-gold)]">Inicio</span>
           </button>
-          <Link href="/tratamientos" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--soft-gray)]/80">
-            <Sparkles className="h-5 w-5 text-[var(--soft-gray)]/90" strokeWidth={1.8} />
-            <span className="text-[9px] tracking-[0.12em]">
-              Tratamientos
-            </span>
+          <Link href="/tratamientos" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--foreground)]/72">
+            <Sparkles className="h-5 w-5" strokeWidth={1.8} />
+            <span className="text-[9px] tracking-[0.12em]">Tratamientos</span>
           </Link>
-          <Link href="/turnos" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--soft-gray)]/80">
-            <CalendarDays className="h-5 w-5 text-[var(--soft-gray)]/90" strokeWidth={1.8} />
-            <span className="text-[9px] tracking-[0.12em]">
-              Turnos
-            </span>
+          <Link href="/turnos" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--foreground)]/72">
+            <CalendarDays className="h-5 w-5" strokeWidth={1.8} />
+            <span className="text-[9px] tracking-[0.12em]">Turnos</span>
           </Link>
-          <Link href="/promociones" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--soft-gray)]/80">
-            <Percent className="h-5 w-5 text-[var(--soft-gray)]/90" strokeWidth={1.8} />
-            <span className="text-[9px] tracking-[0.12em]">
-              Promos
-            </span>
+          <Link href="/promociones" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--foreground)]/72">
+            <Percent className="h-5 w-5" strokeWidth={1.8} />
+            <span className="text-[9px] tracking-[0.12em]">Promos</span>
           </Link>
-          <Link href="/perfil" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--soft-gray)]/80">
-            <User className="h-5 w-5 text-[var(--soft-gray)]/90" strokeWidth={1.8} />
+          <Link href="/perfil" className="flex min-w-0 flex-1 flex-col items-center gap-1 text-[var(--foreground)]/72">
+            <User className="h-5 w-5" strokeWidth={1.8} />
             <span className="text-[9px] tracking-[0.12em]">Perfil</span>
           </Link>
         </div>
