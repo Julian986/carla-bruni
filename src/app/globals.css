@@ -1,17 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  /* Paleta Carla Bruni: grises + dorado #D6BA8A */
-  --background: #3a3b3c;
-  --foreground: #f2f2f2;
-  --soft-gray: #939396;
-  --premium-gold: #d6ba8a;
-  --accent-coral: #7e7f81;
-  --accent-orange: #a09072;
-  --surface-raised: #595b5a;
-  --border-subtle: #c9caca33;
-  /* Texto sobre botones rellenos en tono dorado */
-  --on-accent: #2a2928;
+  /* Base = Lindissima (../lindissima/src/app/globals.css) */
+  --background: #111111;
+  --foreground: #ffffff;
+  --soft-gray: #e5e5e5;
+  --premium-gold: #c9a96a;
+  /* Derivados (cards, gradientes, logo): misma familia que Lindissima en pantallas (#171717, #181818) */
+  --accent-coral: #5a4a38;
+  --accent-orange: #957d52;
+  --surface-raised: #171717;
+  --surface-card: #181818;
+  --foreground-muted: #a8a8a8;
+  --border-subtle: #ffffff1f;
+  --on-accent: #0a0a0a;
+  --shadow-deep: rgba(0, 0, 0, 0.55);
 }
 
 @theme inline {

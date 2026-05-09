@@ -196,7 +196,7 @@ export function BookingPicker({
           onClick={openTreatmentModal}
           className={`flex w-full cursor-pointer items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 text-left transition-all ${
             activeStep === 1
-              ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(228,202,105,0.22),0_0_22px_rgba(206,120,50,0.18)]"
+              ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
               : "border-white/8"
           }`}
         >
@@ -232,7 +232,7 @@ export function BookingPicker({
         <div
           className={`flex items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 transition-all ${
             activeStep === 2
-              ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(228,202,105,0.22),0_0_22px_rgba(206,120,50,0.18)]"
+              ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
               : "border-white/8"
           }`}
         >
@@ -371,7 +371,7 @@ export function BookingPicker({
           <div
             className={`flex items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 transition-all ${
               activeStep === 3
-                ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(228,202,105,0.22),0_0_22px_rgba(206,120,50,0.18)]"
+                ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
                 : "border-white/8"
             }`}
           >
@@ -405,7 +405,7 @@ export function BookingPicker({
                     onClick={() => onTimeChange(time)}
                     className={`h-11 cursor-pointer rounded-xl border text-[16px] transition-colors ${
                       isActive
-                        ? "border-[var(--premium-gold)] bg-[rgba(206,120,50,0.14)] text-[var(--premium-gold)]"
+                        ? "border-[var(--premium-gold)] bg-[rgba(201,169,106,0.14)] text-[var(--premium-gold)]"
                         : "border-white/8 bg-[#151515] text-[var(--soft-gray)]"
                     }`}
                   >
@@ -420,7 +420,7 @@ export function BookingPicker({
                     ? "border-amber-500/35 bg-amber-950/20"
                     : bookingContext === "panel"
                       ? "border-white/8 bg-[#171717]"
-                      : "border-[var(--premium-gold)]/35 bg-[rgba(206,120,50,0.14)]"
+                      : "border-[var(--premium-gold)]/35 bg-[rgba(201,169,106,0.14)]"
                 }`}
               >
                 {selectedDate ? (
@@ -545,7 +545,7 @@ export function BookingPicker({
                       onClick={() => selectTreatment(treatment.id)}
                       className={`w-full cursor-pointer rounded-2xl border px-4 py-3 text-left transition-colors ${
                         isSelected
-                          ? "border-[var(--premium-gold)] bg-[rgba(228,202,105,0.1)]"
+                          ? "border-[var(--premium-gold)] bg-[rgba(201,169,106,0.1)]"
                           : "border-white/8 bg-[#1c1c1c]"
                       }`}
                     >
@@ -585,7 +585,7 @@ export function BookingPicker({
                   onClick={closeTreatmentModal}
                   className={`h-11 w-full rounded-xl text-[14px] font-semibold transition ${
                     selectedTreatmentIds.length > 0
-                      ? "cursor-pointer bg-[var(--premium-gold)] text-black shadow-[0_8px_22px_rgba(206,120,50,0.28)]"
+                      ? "cursor-pointer bg-[var(--premium-gold)] text-black shadow-[0_8px_22px_rgba(201,169,106,0.28)]"
                       : "cursor-not-allowed bg-[#2a2a2a] text-white/40"
                   }`}
                 >

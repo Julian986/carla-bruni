@@ -263,7 +263,7 @@ export function PanelBloqueoAgendaClient() {
                             "flex h-9 w-9 items-center justify-center rounded-full text-[14px] font-semibold leading-none transition",
                             cell.inMonth ? "text-[var(--soft-gray)]" : "text-[var(--soft-gray)]/30",
                             sel
-                              ? "bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(182,75,84,0.35)]"
+                              ? "bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(201,169,106,0.35)]"
                               : isDisabled
                                 ? "opacity-40"
                                 : "hover:bg-white/5",

@@ -334,7 +334,7 @@ export function PanelTurnosDashboard() {
       <div className="mx-auto max-w-md px-4">
         <header className="flex items-start justify-between gap-4 pt-6 pb-1">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--accent-orange)] to-[var(--premium-gold)] shadow-[0_10px_28px_rgba(228,202,105,0.28)]">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--accent-orange)] to-[var(--premium-gold)] shadow-[0_10px_28px_rgba(201,169,106,0.28)]">
               <Sparkles className="h-6 w-6 text-[var(--on-accent)]" strokeWidth={2} />
             </div>
             <div>
@@ -409,7 +409,7 @@ export function PanelTurnosDashboard() {
                       "flex h-9 w-9 items-center justify-center rounded-full text-[14px] font-semibold leading-none transition",
                       inMonth ? "text-[var(--soft-gray)]" : "text-[var(--soft-gray)]/30",
                       sel
-                        ? "bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(182,75,84,0.35)]"
+                        ? "bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(201,169,106,0.35)]"
                         : "hover:bg-white/5",
                     ].join(" ")}
                   >

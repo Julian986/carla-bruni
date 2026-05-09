@@ -229,7 +229,7 @@ export function PanelNuevoTurnoClient() {
               onClick={() => void handleSubmit()}
               className={`flex h-[50px] w-full items-center justify-center rounded-xl text-[15px] font-semibold transition-all ${
                 datosComplete && !submitting
-                  ? "cursor-pointer bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(182,75,84,0.35)]"
+                  ? "cursor-pointer bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(201,169,106,0.35)]"
                   : "cursor-not-allowed bg-[#2a2a2a] text-white/40"
               }`}
             >

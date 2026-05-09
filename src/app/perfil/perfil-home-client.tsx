@@ -118,7 +118,7 @@ export function PerfilHomeClient() {
             <button
               type="submit"
               disabled={busy}
-              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[var(--premium-gold)] text-[14px] font-semibold text-black shadow-[0_6px_20px_rgba(206,120,50,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[var(--premium-gold)] text-[14px] font-semibold text-black shadow-[0_6px_20px_rgba(201,169,106,0.25)] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? "…" : "Ver mis datos"}
             </button>

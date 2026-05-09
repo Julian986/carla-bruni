@@ -474,7 +474,7 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
               <section
                 className={`rounded-2xl border bg-[#171717] px-4 py-4 transition-all ${
                   activeStep === 4
-                    ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(228,202,105,0.22),0_0_22px_rgba(206,120,50,0.18)]"
+                    ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
                     : "border-white/8"
                 }`}
               >
@@ -566,7 +566,7 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
               ref={paymentSectionRef}
               className={`rounded-2xl border bg-[#171717] px-4 py-4 transition-all ${
                 activeStep === 5
-                  ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(228,202,105,0.22),0_0_22px_rgba(206,120,50,0.18)]"
+                  ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
                   : "border-white/8"
               }`}
             >
@@ -604,7 +604,7 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
                     datosComplete && !checkoutLoading
                       ? requiresDeposit
                         ? "cursor-pointer bg-[#009EE3] text-white shadow-[0_8px_24px_rgba(0,158,227,0.35)]"
-                        : "cursor-pointer bg-[var(--premium-gold)] text-black shadow-[0_8px_24px_rgba(206,120,50,0.28)]"
+                        : "cursor-pointer bg-[var(--premium-gold)] text-black shadow-[0_8px_24px_rgba(201,169,106,0.28)]"
                       : "cursor-not-allowed bg-[#2a2a2a] text-white/40"
                   } ${checkoutLoading ? "cursor-wait" : ""}`}
                 >

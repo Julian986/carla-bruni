@@ -3,8 +3,8 @@
   "short_name": "Freyja",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#3a3b3c",
-  "theme_color": "#d6ba8a",
+  "background_color": "#111111",
+  "theme_color": "#c9a96a",
   "icons": [
     {
       "src": "/icon-192.png?v=2",

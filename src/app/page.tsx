@@ -69,7 +69,7 @@ function HomeContent() {
         className="pointer-events-none fixed top-0 right-0 left-0 z-10 h-[100svh] md:hidden"
         style={{
           backgroundImage:
-            "linear-gradient(to bottom, rgba(58,59,60,0.82) 0%, rgba(58,59,60,0.7) 28%, rgba(58,59,60,0.64) 52%, rgba(58,59,60,0.72) 78%, rgba(58,59,60,0.82) 100%)",
+            "linear-gradient(to bottom, rgba(17,17,17,0.82) 0%, rgba(17,17,17,0.7) 28%, rgba(17,17,17,0.64) 52%, rgba(17,17,17,0.72) 78%, rgba(17,17,17,0.82) 100%)",
         }}
       />
 
@@ -79,7 +79,7 @@ function HomeContent() {
         className="fixed top-0 right-0 left-0 z-0 hidden h-[100svh] bg-[var(--background)] md:block"
         style={{
           backgroundImage:
-            "radial-gradient(ellipse 110% 65% at 50% -10%, rgba(214,186,138,0.09), transparent 48%), linear-gradient(to bottom, #3d3e40 0%, var(--background) 42%, #353637 100%)",
+            "radial-gradient(ellipse 110% 65% at 50% -10%, rgba(201,169,106,0.09), transparent 48%), linear-gradient(to bottom, #181818 0%, var(--background) 42%, #0d0d0d 100%)",
         }}
       />
 

@@ -460,7 +460,7 @@ export function ReprogramarTurnoClient({
                               inMonth && !disabledDay ? "text-[var(--soft-gray)]" : "text-[var(--soft-gray)]/30",
                               disabledDay ? "opacity-35" : "",
                               sel && !disabledDay
-                                ? "bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(182,75,84,0.35)]"
+                                ? "bg-gradient-to-br from-[var(--accent-coral)] to-[var(--accent-orange)] text-white shadow-[0_8px_24px_rgba(201,169,106,0.35)]"
                                 : !disabledDay
                                   ? "hover:bg-white/5"
                                   : "",
@@ -574,7 +574,7 @@ export function ReprogramarTurnoClient({
             type="button"
             disabled={saving || !timeLocal}
             onClick={() => void handleSave()}
-            className="w-full cursor-pointer rounded-2xl bg-gradient-to-r from-[var(--accent-coral)] to-[var(--accent-orange)] py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_rgba(182,75,84,0.35)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45"
+            className="w-full cursor-pointer rounded-2xl bg-gradient-to-r from-[var(--accent-coral)] to-[var(--accent-orange)] py-3.5 text-[15px] font-bold text-white shadow-[0_10px_28px_rgba(201,169,106,0.35)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-45"
           >
             {saving ? "Guardando…" : "Confirmar nuevo horario"}
           </button>

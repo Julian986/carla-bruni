@@ -80,7 +80,7 @@ export function LaserPromoEnganche() {
       <div className="flex flex-col gap-2 p-4 pt-3">
         <Link
           href="/turnos?treatment=depilacion-laser"
-          className="flex h-10 w-full items-center justify-center rounded-full bg-gradient-to-r from-[var(--accent-orange)] to-[var(--premium-gold)] text-[14px] font-medium text-white shadow-[0_6px_20px_rgba(228,202,105,0.28)]"
+          className="flex h-10 w-full items-center justify-center rounded-full bg-gradient-to-r from-[var(--accent-orange)] to-[var(--premium-gold)] text-[14px] font-medium text-white shadow-[0_6px_20px_rgba(201,169,106,0.28)]"
         >
           Reservar turno
         </Link>

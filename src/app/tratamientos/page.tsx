@@ -94,7 +94,7 @@ export default function TreatmentsPage() {
               className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[#2e2f30] shadow-[0_8px_22px_rgba(0,0,0,0.35)]"
             >
               <div className="relative h-32 shrink-0 overflow-hidden bg-[#252526]">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(214,186,138,0.2),transparent_46%),linear-gradient(135deg,#2a2a2b_0%,#232324_58%,#1e1e1f_100%)]" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(201,169,106,0.2),transparent_46%),linear-gradient(135deg,#2a2a2b_0%,#232324_58%,#1e1e1f_100%)]" />
                 <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.04),rgba(255,255,255,0))]" />
                 <div className="relative z-10 flex h-full items-center justify-center">
                   <CategoryIcon category={service.category} />

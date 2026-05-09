@@ -110,7 +110,7 @@ export default function PromotionsPage() {
               >
                 <div className="absolute inset-0 grid grid-cols-[47%_53%]">
                   <div className="relative flex min-h-[148px] flex-col overflow-hidden border-r border-white/6 bg-[#252526]">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_16%,rgba(214,186,138,0.2),transparent_44%),linear-gradient(135deg,#2a2a2b_0%,#1e1e1f_62%,#1a1a1b_100%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_16%,rgba(201,169,106,0.2),transparent_44%),linear-gradient(135deg,#2a2a2b_0%,#1e1e1f_62%,#1a1a1b_100%)]" />
                     <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-2">
                       <CategoryIcon category={promo.category} />
                       <span className="text-[10px] tracking-[0.12em] text-[var(--soft-gray)]/68">DESTACADO</span>
