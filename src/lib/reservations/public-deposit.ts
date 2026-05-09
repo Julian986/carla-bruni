@@ -1,7 +1,14 @@
 /**
- * Tratamientos para los que la reserva pública exige seña (Mercado Pago).
- * El resto se confirma al instante con `paymentStatus: not_required`.
+ * Seña vía Mercado Pago en la reserva pública.
+ *
+ * **Desactivada por ahora:** ningún tratamiento exige pago para reservar;
+ * todas las reservas pasan directo a confirmadas (`insertPublicConfirmedReservationWithoutPayment`).
+ *
+ * Para volver a exigir seña en algunos servicios, cambiá `DEPOSIT_DISABLED`
+ * a `false` y usá de nuevo la lista `IDS` con `SET.has(treatmentId.trim())`.
  */
+const DEPOSIT_DISABLED = true;
+
 const IDS = [
   "freyja-consulta-analisis-primera-piel",
   "freyja-hifu-25d-facial",
@@ -15,5 +22,6 @@ const IDS = [
 const SET = new Set<string>(IDS);
 
 export function treatmentRequiresPublicDeposit(treatmentId: string): boolean {
+  if (DEPOSIT_DISABLED) return false;
   return SET.has(treatmentId.trim());
 }

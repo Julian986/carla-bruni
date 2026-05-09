@@ -34,17 +34,22 @@ type ContactItem = {
   href?: string;
 };
 
+/** Solo dígitos para wa.me (Argentina: 54 + 9 + código de área + número). */
+const WHATSAPP_PHONE_E164 = "5492235188585";
+const WHATSAPP_DISPLAY = "+54 9 2235 18-8585";
+const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_PHONE_E164}`;
+
 const contactItems: ContactItem[] = [
   {
     label: "Dirección",
-    description: "Suipacha 1839 · Funes",
+    description: "Por completar · te avisamos cuando esté el dato",
     icon: MapPin,
   },
   {
     label: "WhatsApp",
-    description: "+54 9 341 398-2210",
+    description: WHATSAPP_DISPLAY,
     icon: WhatsappIcon,
-    href: "https://wa.me/5493413982210",
+    href: WHATSAPP_HREF,
   },
   {
     label: "Instagram",
@@ -122,23 +127,9 @@ export default function ContactoPage() {
           <p className="text-[12px] uppercase tracking-[0.18em] text-[var(--soft-gray)]/70">
             Ubicación en mapa
           </p>
-          <div className="mt-2 overflow-hidden rounded-xl border border-white/8 bg-black/40">
-            <iframe
-              src="https://www.google.com/maps?q=Suipacha+1839,+Funes,+Santa+Fe,+Argentina&z=16&output=embed"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="h-48 w-full border-0"
-              allowFullScreen
-            />
-          </div>
-          <Link
-            href="https://www.google.com/maps/search/Suipacha+1839,+Funes,+Santa+Fe,+Argentina"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex items-center gap-2 text-[11px] text-[var(--premium-gold)]"
-          >
-            <span>Ver mapa en Google Maps</span>
-          </Link>
+          <p className="mt-2 rounded-xl border border-white/8 bg-black/30 px-3 py-8 text-center text-[13px] leading-relaxed text-[var(--soft-gray)]/75">
+            Todavía no publicamos la dirección del local. Cuando la tengamos, acá vas a ver el mapa.
+          </p>
         </section>
 
         {/*
