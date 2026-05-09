@@ -13,8 +13,6 @@ const input = path.join(root, "public", "logo.jpeg");
 const outDir = path.join(root, "public");
 
 const WHITE = { r: 255, g: 255, b: 255, alpha: 1 };
-/** Fondo OG alineado a la app (--background #111111) */
-const SPLASH_BG = { r: 17, g: 17, b: 17, alpha: 1 };
 
 function pipeline() {
   return sharp(input).rotate();
@@ -70,28 +68,16 @@ async function main() {
   await paddedSquare(192, "icon-192.png");
   await paddedSquare(512, "icon-512.png");
 
+  /** OG 1200×630: logo a pantalla completa (cover), sin lienzo gris alrededor. */
   const ogW = 1200;
   const ogH = 630;
-  const logoBox = 600;
-  const logoBuf = await pipeline()
-    .resize(logoBox, logoBox, { fit: "contain", background: SPLASH_BG })
-    .toBuffer();
-
-  await sharp({
-    create: {
-      width: ogW,
-      height: ogH,
-      channels: 4,
-      background: SPLASH_BG,
-    },
-  })
-    .composite([{ input: logoBuf, gravity: "centre" }])
+  const ogPathV4 = path.join(outDir, "og-image-v4.jpg");
+  await pipeline()
+    .resize(ogW, ogH, { fit: "cover", position: "centre" })
     .jpeg({ quality: 90, mozjpeg: true })
-    .toFile(path.join(outDir, "og-image-v3.jpg"));
+    .toFile(ogPathV4);
 
-  await sharp(path.join(outDir, "og-image-v3.jpg")).jpeg({ quality: 90, mozjpeg: true }).toFile(
-    path.join(outDir, "og-image.jpg"),
-  );
+  await sharp(ogPathV4).jpeg({ quality: 90, mozjpeg: true }).toFile(path.join(outDir, "og-image.jpg"));
 
   console.log("[icons] OK:", [
     "favicon-64.png",
@@ -101,7 +87,7 @@ async function main() {
     "apple-touch-icon.png",
     "icon-192.png",
     "icon-512.png",
-    "og-image-v3.jpg",
+    "og-image-v4.jpg",
     "og-image.jpg",
   ].join(", "));
 }
