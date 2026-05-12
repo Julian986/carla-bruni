@@ -88,7 +88,7 @@ export async function computeBookableSlots(
       ? getPublicBookableTimeSlots(params.dateKey, params.now)
       : getAvailableTimesForDate(params.dateKey);
 
-  slots = filterSlotsServiceEndsOnOrBeforeClose(slots, treatment.durationMinutes);
+  slots = filterSlotsServiceEndsOnOrBeforeClose(slots, treatment.durationMinutes, params.dateKey);
   slots = filterPublicSlotsByTreatmentRules(treatment.id, slots, params.dateKey);
   const busy = await loadBusyIntervalsMs(db, params.dateKey, excludeId);
   const capGetter = await buildCapGetterForDate(db, params.dateKey);
@@ -141,7 +141,7 @@ export async function computeBookableSlotsForTreatmentIds(
     params.scope === "public"
       ? getPublicBookableTimeSlots(params.dateKey, params.now)
       : getAvailableTimesForDate(params.dateKey);
-  slots = filterSlotsServiceEndsOnOrBeforeClose(slots, totalDuration);
+  slots = filterSlotsServiceEndsOnOrBeforeClose(slots, totalDuration, params.dateKey);
   const keratinaIdx = treatments.findIndex((t) => t.id === "keratina");
   if (params.scope === "public" && keratinaIdx >= 0) {
     // En combos públicos, keratina debe quedar al final y empezar a las 15:00.

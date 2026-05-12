@@ -10,8 +10,11 @@ export const BRAND_LOGO_SRC2 = "/logo.jpeg";
 const LOGO_SOURCES = [BRAND_LOGO_SRC, BRAND_LOGO_SRC2] as const;
 
 const sizeClass = {
-  splash: "h-52 w-52 max-h-[min(56vw,280px)] max-w-[min(56vw,280px)] sm:h-[15rem] sm:w-[15rem] sm:max-h-[300px] sm:max-w-[300px]",
-  header: "h-[7.25rem] w-[7.25rem]",
+  /** Pantalla de bienvenida: prioridad visual sobre el nombre (pedido de marca). */
+  splash:
+    "h-60 w-60 max-h-[min(68vw,320px)] max-w-[min(68vw,320px)] sm:h-[19rem] sm:w-[19rem] sm:max-h-[380px] sm:max-w-[380px]",
+  /** Cabecera de inicio: logo claramente más grande que la línea «CARLA BRUNI». */
+  header: "h-44 w-44 sm:h-[11.5rem] sm:w-[11.5rem]",
   /** Cabeceras de página secundarias */
   page: "h-28 w-28",
   compact: "h-24 w-24",

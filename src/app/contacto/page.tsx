@@ -144,13 +144,11 @@ export default function ContactoPage() {
             <p className="font-semibold text-[var(--premium-gold)]">
               Horarios en los que NO se toman turnos
             </p>
-            <p>Lunes a Miércoles · 12:00 a 18:00</p>
-            <p>Viernes · 12:00 a 18:00</p>
+            <p>Lunes y miércoles · cerrado</p>
             <p className="mt-2 font-semibold text-[var(--premium-gold)]">Horarios disponibles para turnos</p>
-            <p>Lunes a Miércoles · 08:00–11:00 · 15:00–17:00</p>
-            <p>Jueves · 08:00–11:00 · 15:00–19:00</p>
-            <p>Viernes · 08:00–11:00 · 15:00–17:00</p>
-            <p>Sábados · 08:00–12:00</p>
+            <p>Martes · 8:30–16:30</p>
+            <p>Jueves y viernes · 9:00–18:00</p>
+            <p>Sábados · 9:00–15:00</p>
           </div>
         </section>
         */}

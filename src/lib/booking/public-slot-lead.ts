@@ -48,7 +48,7 @@ export function getPublicBookableTimeSlotsForTreatment(
   if (treatmentId) {
     const t = findSalonTreatmentById(treatmentId);
     if (t) {
-      slots = filterSlotsServiceEndsOnOrBeforeClose(slots, t.durationMinutes);
+      slots = filterSlotsServiceEndsOnOrBeforeClose(slots, t.durationMinutes, dateKey);
     }
   }
   return filterPublicSlotsByTreatmentRules(treatmentId, slots, dateKey);

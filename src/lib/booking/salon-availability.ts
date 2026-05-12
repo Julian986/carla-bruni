@@ -21,8 +21,8 @@ export const SALON_TREATMENT_OPTIONS: SalonTreatmentOption[] = SALON_TREATMENTS.
   category: t.category,
 }));
 
-/** Minuto del día (0–24h): el servicio debe *terminar* a esta hora o antes (16:00 = cierre puntual). */
-export const SALON_LAST_SERVICE_END_MINUTES = 16 * 60;
+/** Tope de duración en catálogo (min); usado solo en calendarios con `availableTimesByDateOverride`. */
+const SALON_MAX_SERVICE_DURATION_MINUTES = 90;
 
 const SLOT_STEP_MINUTES = 30;
 
@@ -41,17 +41,46 @@ function hhmmToMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
+/** Minuto del día en que deben haber terminado los servicios (cierre), por día de semana; null = cerrado. */
+function closingMinutesForWeekday(weekday: number): number | null {
+  switch (weekday) {
+    case 2: // martes
+      return 16 * 60 + 30;
+    case 4: // jueves
+    case 5: // viernes
+      return 18 * 60;
+    case 6: // sábado
+      return 15 * 60;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Cierre del salón en minutos desde medianoche (ART, mismo dateKey): el servicio debe terminar a esta hora o antes.
+ * Feriados: null. Días con override: último inicio listado + duración máxima de servicio.
+ */
+export function getSalonClosingMinutesForDateKey(dateKey: string): number | null {
+  if (isArgentinaPublicHoliday(dateKey)) return null;
+  const override = availableTimesByDateOverride[dateKey];
+  if (override && override.length > 0) {
+    const maxStart = Math.max(...override.map(hhmmToMinutes));
+    return maxStart + SALON_MAX_SERVICE_DURATION_MINUTES;
+  }
+  return closingMinutesForWeekday(parseDateKey(dateKey).getDay());
+}
+
 /** Inicio del primer turno posible y duración hasta el cierre de servicios (p. ej. bloqueo “todo el día”). */
 export function getSalonWorkDayBlockRange(dateKey: string): { timeLocal: string; durationMinutes: number } | null {
   const slots = getAvailableTimesForDate(dateKey);
   if (slots.length === 0) return null;
   const startMins = hhmmToMinutes(slots[0]);
-  const endMins = SALON_LAST_SERVICE_END_MINUTES;
-  if (endMins <= startMins) return null;
+  const endMins = getSalonClosingMinutesForDateKey(dateKey);
+  if (endMins == null || endMins <= startMins) return null;
   return { timeLocal: slots[0], durationMinutes: endMins - startMins };
 }
 
-/** Inicios de turno cada `SLOT_STEP_MINUTES`, con `open` inclusive y `close` exclusive (ej. 9:00–16:00). */
+/** Inicios de turno cada `SLOT_STEP_MINUTES`, con `open` inclusive y `close` exclusive (ej. 9:00–18:00 → último inicio 17:30). */
 function buildStepSlots(openH: number, openM: number, closeH: number, closeM: number): string[] {
   let t = openH * 60 + openM;
   const end = closeH * 60 + closeM;
@@ -64,25 +93,27 @@ function buildStepSlots(openH: number, openM: number, closeH: number, closeM: nu
 }
 
 /**
- * Horarios base según Google Maps (ART): lun y dom cerrados; mar–vie 9:00–16:00; sáb 10:00–16:00.
- * Grilla cada 30 min (último inicio 15:30).
+ * Horarios base (ART): lun y mié cerrados; mar 8:30–16:30; jue y vie 9–18; sáb 9–15; dom cerrado.
+ * Grilla cada 30 min (cierre exclusivo en `buildStepSlots`: último inicio media hora antes del cierre).
  */
 const availableTimesByWeekday: Record<number, string[]> = {
   0: [],
   1: [],
-  2: buildStepSlots(9, 0, 16, 0),
-  3: buildStepSlots(9, 0, 16, 0),
-  4: buildStepSlots(9, 0, 16, 0),
-  5: buildStepSlots(9, 0, 16, 0),
-  6: buildStepSlots(10, 0, 16, 0),
+  2: buildStepSlots(8, 30, 16, 30),
+  3: [],
+  4: buildStepSlots(9, 0, 18, 0),
+  5: buildStepSlots(9, 0, 18, 0),
+  6: buildStepSlots(9, 0, 15, 0),
 };
 
-/** Quita inicios donde el servicio pasaría de `SALON_LAST_SERVICE_END_MINUTES`. */
+/** Quita inicios donde el servicio pasaría del cierre del salón ese día (`dateKey`). */
 export function filterSlotsServiceEndsOnOrBeforeClose(
   slots: string[],
   durationMinutes: number,
-  lastServiceEndMinutes: number = SALON_LAST_SERVICE_END_MINUTES,
+  dateKey: string,
 ): string[] {
+  const lastServiceEndMinutes = getSalonClosingMinutesForDateKey(dateKey);
+  if (lastServiceEndMinutes == null) return [];
   return slots.filter((t) => hhmmToMinutes(t) + durationMinutes <= lastServiceEndMinutes);
 }
 

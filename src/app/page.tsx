@@ -19,7 +19,7 @@ function SplashScreen({ onLogoReady }: { onLogoReady: () => void }) {
       <div className="flex w-full max-w-md flex-col items-center px-6">
         {/* Logo */}
         <div className="mb-8 text-center">
-          <div className="inline-flex flex-col items-center gap-2">
+          <div className="inline-flex flex-col items-center gap-3">
             <BrandLogo
               size="splash"
               fetchPriority="high"
@@ -85,7 +85,7 @@ function HomeContent() {
 
       <main className="relative z-20 mx-auto min-h-screen w-full max-w-md px-5 pt-14 pb-28 md:pt-20">
         <header className="flex justify-center">
-          <div className="inline-flex max-w-full flex-col items-center gap-1 text-center max-md:[text-shadow:0_1px_8px_rgba(0,0,0,0.35)] md:[text-shadow:none]">
+          <div className="inline-flex max-w-full flex-col items-center gap-2.5 text-center max-md:[text-shadow:0_1px_8px_rgba(0,0,0,0.35)] md:[text-shadow:none]">
             <BrandLogo size="header" />
             <div className="text-center text-[22px] font-medium leading-tight tracking-[0.1em] text-[var(--foreground)] font-heading">
               <span className="block">CARLA BRUNI</span>
