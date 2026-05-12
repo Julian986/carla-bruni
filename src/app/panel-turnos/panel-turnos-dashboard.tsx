@@ -86,7 +86,7 @@ function digitsOnlyPhone(s: string) {
   return s.replace(/\D/g, "");
 }
 
-/** Dígitos internacionales para wa.me (Argentina centrado, sin +). */
+/** Dígitos internacionales para enlaces de WhatsApp (Argentina centrado, sin +). */
 function whatsAppDigitsFromStoredPhone(raw: string): string | null {
   const d = digitsOnlyPhone(raw);
   if (d.length < 10 || d.length > 15) return null;
@@ -97,8 +97,9 @@ function whatsAppDigitsFromStoredPhone(raw: string): string | null {
 }
 
 /**
- * Emojis del recordatorio vía wa.me en escalares Unicode (evita que el archivo o el
- * bundler altere pictogramas UTF-8 y WhatsApp los muestre como caracteres incorrectos).
+ * Emojis del recordatorio en escalares Unicode (evita que el archivo o el bundler altere
+ * pictogramas UTF-8). El enlace usa api.whatsapp.com/send en lugar de wa.me: la redirección
+ * de wa.me en escritorio/WhatsApp Web suele corromper el parámetro text (aparece).
  */
 const WA_REMINDER_EMOJI = {
   calendar: String.fromCodePoint(0x1f5d3),
@@ -123,7 +124,7 @@ ${car} Estacionamiento *Sin Cargo hasta 90 minutos* en Belgrano 2641 - MDQ
 
 Preparate para disfrutar de una experiencia única para tu piel. 
 *¡Carla te va a estar esperando con el amor y la dedicación que te mereces!* ${herb}${heart}`;
-  return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
+  return `https://api.whatsapp.com/send?phone=${n}&text=${encodeURIComponent(text)}`;
 }
 
 function ServiceIcon({ category }: { category: string }) {
