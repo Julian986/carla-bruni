@@ -26,7 +26,7 @@ import {
   buildPanelMonthGrid,
   panelMonthTitle,
 } from "@/lib/booking/panel-month-grid";
-import { panelDurationLabel } from "@/lib/treatments/catalog";
+import { findSalonTreatmentById, panelDurationLabel } from "@/lib/treatments/catalog";
 
 export type PanelReservation = {
   id: string;
@@ -54,6 +54,7 @@ export type PanelAgendaBlock = {
   timeLocal: string;
   durationMinutes: number;
   scope: string;
+  blockedTreatmentIds?: string[] | null;
   recurrence: { type: "weekly"; untilDateKey?: string | null } | null;
   notes?: string | null;
 };
@@ -95,15 +96,33 @@ function whatsAppDigitsFromStoredPhone(raw: string): string | null {
   return `54${d}`;
 }
 
-function whatsAppChatUrl(
-  phoneRaw: string,
-  opts: { customerName: string; displayDate: string; timeLocal: string; treatmentName: string },
-): string | null {
+/**
+ * Emojis del recordatorio vía wa.me en escalares Unicode (evita que el archivo o el
+ * bundler altere pictogramas UTF-8 y WhatsApp los muestre como caracteres incorrectos).
+ */
+const WA_REMINDER_EMOJI = {
+  calendar: String.fromCodePoint(0x1f5d3),
+  clock: String.fromCodePoint(0x23f0),
+  pin: String.fromCodePoint(0x1f4cd),
+  car: String.fromCodePoint(0x1f698),
+  herb: String.fromCodePoint(0x1f33f),
+  heart: String.fromCodePoint(0x1f90e),
+} as const;
+
+function whatsAppChatUrl(phoneRaw: string, opts: { displayDate: string; timeLocal: string }): string | null {
   const n = whatsAppDigitsFromStoredPhone(phoneRaw);
   if (!n) return null;
-  const name = opts.customerName.trim();
-  const greet = name ? `Hola ${name}` : "Hola";
-  const text = `${greet}, te escribimos desde Carla Bruni · Espacio Freyja por tu turno: ${opts.treatmentName}, ${opts.displayDate} a las ${opts.timeLocal}.`;
+  const { calendar, clock, pin, car, herb, heart } = WA_REMINDER_EMOJI;
+  const text = `* 
+Te recordamos que tenés un turno agendado en _Espacio Freyja_:
+
+${calendar} Fecha: ${opts.displayDate}
+${clock} Hora: ${opts.timeLocal}
+${pin}*Santiago del Estero 1741 piso 2 Oficina "E"* (Anunciate en recepción _ó_ al salir del ascensor, pasá la reja)
+${car} Estacionamiento *Sin Cargo hasta 90 minutos* en Belgrano 2641 - MDQ 
+
+Preparate para disfrutar de una experiencia única para tu piel. 
+*¡Carla te va a estar esperando con el amor y la dedicación que te mereces!* ${herb}${heart}`;
   return `https://wa.me/${n}?text=${encodeURIComponent(text)}`;
 }
 
@@ -160,10 +179,21 @@ function StatusBadge({
 }
 
 function scopeLabel(scope: string) {
-  if (scope === "salon") return "Todo el salón";
+  if (scope === "salon") return "Todos los tratamientos";
   if (scope === "chair_1") return "Silla 1";
   if (scope === "chair_2") return "Silla 2";
   return scope;
+}
+
+function blockScopeDescription(b: PanelAgendaBlock): string {
+  const ids = b.blockedTreatmentIds?.filter(Boolean) ?? [];
+  if (ids.length === 0) return scopeLabel(b.scope);
+  const names = ids
+    .map((id) => findSalonTreatmentById(id)?.name ?? id)
+    .slice(0, 4)
+    .join(", ");
+  const more = ids.length > 4 ? ` +${ids.length - 4}` : "";
+  return `Solo: ${names}${more}`;
 }
 
 export function PanelTurnosDashboard() {
@@ -339,7 +369,7 @@ export function PanelTurnosDashboard() {
             </div>
             <div>
               <h1 className="font-heading text-[18px] leading-tight text-[var(--premium-gold)]">Carla Bruni · Espacio Freyja</h1>
-              <p className="text-[12px] leading-relaxed text-[var(--soft-gray)]/58">Peluquería</p>
+              <p className="text-[12px] leading-relaxed text-[var(--soft-gray)]/58">Dermocosmiatría</p>
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -488,7 +518,7 @@ export function PanelTurnosDashboard() {
                           <Lock className="h-5 w-5 shrink-0 text-amber-300/90" strokeWidth={2} />
                           <div className="min-w-0 flex-1">
                             <p className="text-[15px] font-bold leading-snug text-[var(--soft-gray)]">Bloqueo de agenda</p>
-                            <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">{scopeLabel(b.scope)}</p>
+                            <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">{blockScopeDescription(b)}</p>
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                               <span className="inline-block rounded-full bg-amber-500/18 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-amber-100/95">
                                 Bloqueo
@@ -519,10 +549,8 @@ export function PanelTurnosDashboard() {
               }
               const r = row.item;
               const waUrl = whatsAppChatUrl(r.customerPhone, {
-                customerName: r.customerName,
                 displayDate: r.displayDate,
                 timeLocal: r.timeLocal,
-                treatmentName: r.treatmentName,
               });
               return (
                 <article

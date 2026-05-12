@@ -9,6 +9,7 @@ import { agendaBlockAppliesToDateKey } from "@/lib/booking/agenda-blocks-shared"
 import type { ReprogramDayRow } from "@/lib/booking/panel-reprogram-day-rows";
 import { PANEL_WEEK_LETTERS, buildPanelMonthGrid, panelMonthTitle } from "@/lib/booking/panel-month-grid";
 import { argentinaTodayDateKey, minPublicBookableDateKey } from "@/lib/booking/public-slot-lead";
+import { findSalonTreatmentById } from "@/lib/treatments/catalog";
 
 export type ReprogramarVariant = "customer" | "panel";
 
@@ -53,9 +54,21 @@ type PanelAgendaBlockLite = {
   timeLocal: string;
   durationMinutes: number;
   scope: string;
+  blockedTreatmentIds?: string[] | null;
   recurrence: { type: "weekly"; untilDateKey?: string | null } | null;
   notes?: string | null;
 };
+
+function agendaBlockCaption(row: { scope: string; blockedTreatmentIds?: string[] | null }) {
+  const ids = row.blockedTreatmentIds?.filter(Boolean) ?? [];
+  if (ids.length === 0) return scopeLabelPanel(row.scope);
+  const names = ids
+    .map((id) => findSalonTreatmentById(id)?.name ?? id)
+    .slice(0, 3)
+    .join(", ");
+  const more = ids.length > 3 ? ` +${ids.length - 3}` : "";
+  return `Solo: ${names}${more}`;
+}
 
 function scopeLabelPanel(scope: string) {
   if (scope === "salon") return "Todo el salón";
@@ -542,7 +555,7 @@ export function ReprogramarTurnoClient({
                         className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-3.5 py-2.5 text-[13px] text-amber-100/88"
                       >
                         <span className="font-mono tabular-nums font-semibold">{row.timeLocal}</span>
-                        <span className="ml-2 text-[12px]">Bloqueo · {scopeLabelPanel(row.scope)}</span>
+                        <span className="ml-2 text-[12px]">Bloqueo · {agendaBlockCaption(row)}</span>
                         {row.notes ? (
                           <span className="mt-1 block text-[12px] leading-snug text-amber-100/65">{row.notes}</span>
                         ) : null}

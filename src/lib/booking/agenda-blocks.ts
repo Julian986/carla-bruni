@@ -7,7 +7,8 @@ import {
   agendaBlockAppliesToDateKey,
   parseDateKeyLocal,
 } from "@/lib/booking/agenda-blocks-shared";
-import { formatSalonDisplayDate } from "@/lib/booking/salon-availability";
+import { formatSalonDisplayDate, getSalonWorkDayBlockRange } from "@/lib/booking/salon-availability";
+import { findSalonTreatmentById } from "@/lib/treatments/catalog";
 import { salonConcurrentCapAtInstant, slotIntervalMs, type IntervalMs } from "@/lib/booking/slot-overlap";
 
 export type { AgendaBlockRecurrence, AgendaBlockScope, AgendaBlockRule } from "@/lib/booking/agenda-blocks-shared";
@@ -24,6 +25,8 @@ export type SalonAgendaBlockDoc = {
   startsAt: Date;
   displayDate: string;
   scope: AgendaBlockScope;
+  /** Si hay IDs, el bloqueo aplica solo a esos tratamientos (no reduce cupo del salón). */
+  blockedTreatmentIds?: string[] | null;
   recurrence: AgendaBlockRecurrence;
   notes?: string | null;
   createdAt: Date;
@@ -90,6 +93,7 @@ export async function loadExpandedAgendaBlocksForDate(db: Db, dateKey: string): 
       timeLocal: 1,
       durationMinutes: 1,
       scope: 1,
+      blockedTreatmentIds: 1,
       recurrence: 1,
     })
     .toArray();
@@ -100,6 +104,8 @@ export async function loadExpandedAgendaBlocksForDate(db: Db, dateKey: string): 
 
   for (const doc of rows) {
     if (!agendaBlockAppliesToDateKey(doc as SalonAgendaBlockDoc, dateKey)) continue;
+    const blocked = (doc as SalonAgendaBlockDoc).blockedTreatmentIds?.filter(Boolean) ?? [];
+    if (blocked.length > 0) continue;
     const iv = intervalForAgendaBlockOnDate(doc as SalonAgendaBlockDoc, dateKey);
     if (!iv) continue;
     const scope = (doc as SalonAgendaBlockDoc).scope;
@@ -141,6 +147,23 @@ export async function listSalonAgendaBlocksApplyingToDateKey(db: Db, dateKey: st
     .toArray();
 
   return rows.filter((doc) => agendaBlockAppliesToDateKey(doc, dateKey));
+}
+
+/** Bloqueos por tratamiento en `dateKey` (intervalo + IDs) para filtrar slots. */
+export async function loadServiceAgendaBlockIntervalsForDate(
+  db: Db,
+  dateKey: string,
+): Promise<{ interval: IntervalMs; treatmentIds: string[] }[]> {
+  const docs = await listSalonAgendaBlocksApplyingToDateKey(db, dateKey);
+  const out: { interval: IntervalMs; treatmentIds: string[] }[] = [];
+  for (const doc of docs) {
+    const ids = doc.blockedTreatmentIds?.map((x) => String(x).trim()).filter(Boolean) ?? [];
+    if (ids.length === 0) continue;
+    const iv = intervalForAgendaBlockOnDate(doc, dateKey);
+    if (!iv) continue;
+    out.push({ interval: iv, treatmentIds: [...new Set(ids)] });
+  }
+  return out;
 }
 
 function instantInsideOpenInterval(iv: IntervalMs, instantMs: number): boolean {
@@ -217,6 +240,10 @@ export type InsertAgendaBlockInput = {
   scope: AgendaBlockScope;
   recurrence: AgendaBlockRecurrence;
   notes?: string | null;
+  /** Si hay IDs, el bloqueo solo afecta reservas de esos tratamientos. */
+  blockedTreatmentIds?: string[] | null;
+  /** Si true, se ignoran `timeLocal` y `durationMinutes` del input y se usa el día laboral del salón. */
+  useWorkDayRange?: boolean;
 };
 
 export async function insertAgendaBlock(
@@ -224,20 +251,58 @@ export async function insertAgendaBlock(
   input: InsertAgendaBlockInput,
 ): Promise<{ ok: true; id: string } | { error: string; code?: string }> {
   const anchorDateKey = input.anchorDateKey.trim();
-  const timeLocal = input.timeLocal.trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(anchorDateKey)) {
     return { error: "Fecha inválida.", code: "INVALID_DATE" };
   }
+
+  let blockedTreatmentIds: string[] | undefined;
+  if (input.blockedTreatmentIds != null && input.blockedTreatmentIds.length > 0) {
+    const set = new Set<string>();
+    for (const x of input.blockedTreatmentIds) {
+      const id = typeof x === "string" ? x.trim() : "";
+      if (!id) continue;
+      if (!findSalonTreatmentById(id)) {
+        return { error: "Uno o más tratamientos no existen en el catálogo.", code: "INVALID_TREATMENT" };
+      }
+      set.add(id);
+    }
+    if (set.size === 0) {
+      return { error: "Elegí al menos un tratamiento para el bloqueo por servicio.", code: "INVALID_TREATMENTS" };
+    }
+    if (set.size > 40) {
+      return { error: "Demasiados tratamientos en un solo bloqueo.", code: "INVALID_TREATMENTS" };
+    }
+    blockedTreatmentIds = [...set];
+  }
+
+  let timeLocal = input.timeLocal.trim();
+  let dm = input.durationMinutes;
+
+  if (input.useWorkDayRange) {
+    const r = getSalonWorkDayBlockRange(anchorDateKey);
+    if (!r) {
+      return {
+        error: "Ese día no tiene horario de atención; no se puede usar “todo el día”.",
+        code: "NO_WORKDAY",
+      };
+    }
+    timeLocal = r.timeLocal;
+    dm = r.durationMinutes;
+  }
+
   if (!/^\d{2}:\d{2}$/.test(timeLocal)) {
     return { error: "Horario inválido.", code: "INVALID_TIME" };
   }
-  const dm = input.durationMinutes;
   if (!Number.isFinite(dm) || dm < 15 || dm > 12 * 60) {
     return { error: "Duración inválida (entre 15 min y 12 h).", code: "INVALID_DURATION" };
   }
-  const scope = input.scope;
+
+  let scope = input.scope;
   if (scope !== "salon" && scope !== "chair_1" && scope !== "chair_2") {
     return { error: "Alcance inválido.", code: "INVALID_SCOPE" };
+  }
+  if (blockedTreatmentIds?.length) {
+    scope = "salon";
   }
 
   let recurrence: AgendaBlockRecurrence = null;
@@ -269,6 +334,7 @@ export async function insertAgendaBlock(
     startsAt,
     displayDate: formatSalonDisplayDate(anchorDateKey),
     scope,
+    ...(blockedTreatmentIds?.length ? { blockedTreatmentIds } : {}),
     recurrence,
     notes: input.notes?.trim() ? String(input.notes).trim().slice(0, 500) : null,
     createdAt: now,

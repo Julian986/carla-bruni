@@ -1,12 +1,58 @@
 import type { Db, ObjectId } from "mongodb";
 import { ObjectId as ObjectIdCtor } from "mongodb";
 
-import { buildCapGetterForDate } from "@/lib/booking/agenda-blocks";
+import { buildCapGetterForDate, loadServiceAgendaBlockIntervalsForDate } from "@/lib/booking/agenda-blocks";
 import { getAvailableTimesForDate, filterSlotsServiceEndsOnOrBeforeClose } from "@/lib/booking/salon-availability";
 import { getPublicBookableTimeSlots } from "@/lib/booking/public-slot-lead";
 import { KERATINA_ONLY_TIME_LOCAL, filterPublicSlotsByTreatmentRules } from "@/lib/booking/treatment-slot-rules";
-import { filterSlotsBySalonCapacity, loadBusyIntervalsMs } from "@/lib/booking/slot-overlap";
+import {
+  filterSlotsBySalonCapacity,
+  loadBusyIntervalsMs,
+  intervalsOverlap,
+  slotIntervalMs,
+  type IntervalMs,
+} from "@/lib/booking/slot-overlap";
 import { findSalonTreatmentById } from "@/lib/treatments/catalog";
+
+function filterSlotsByServiceAgendaBlocks(
+  slots: string[],
+  dateKey: string,
+  serviceDurationMinutes: number,
+  treatmentId: string,
+  blocks: { interval: IntervalMs; treatmentIds: string[] }[],
+): string[] {
+  if (blocks.length === 0) return slots;
+  return slots.filter((t) => {
+    const slotIv = slotIntervalMs(dateKey, t, serviceDurationMinutes);
+    if (!slotIv) return false;
+    for (const b of blocks) {
+      if (!b.treatmentIds.includes(treatmentId)) continue;
+      if (intervalsOverlap(slotIv, b.interval)) return false;
+    }
+    return true;
+  });
+}
+
+function filterSlotsByServiceAgendaBlocksCombo(
+  slots: string[],
+  dateKey: string,
+  totalDurationMinutes: number,
+  comboTreatmentIds: string[],
+  blocks: { interval: IntervalMs; treatmentIds: string[] }[],
+): string[] {
+  if (blocks.length === 0) return slots;
+  const comboSet = new Set(comboTreatmentIds);
+  return slots.filter((t) => {
+    const slotIv = slotIntervalMs(dateKey, t, totalDurationMinutes);
+    if (!slotIv) return false;
+    for (const b of blocks) {
+      const hits = b.treatmentIds.some((id) => comboSet.has(id));
+      if (!hits) continue;
+      if (intervalsOverlap(slotIv, b.interval)) return false;
+    }
+    return true;
+  });
+}
 
 export type BookingSlotScope = "public" | "panel";
 
@@ -46,7 +92,10 @@ export async function computeBookableSlots(
   slots = filterPublicSlotsByTreatmentRules(treatment.id, slots, params.dateKey);
   const busy = await loadBusyIntervalsMs(db, params.dateKey, excludeId);
   const capGetter = await buildCapGetterForDate(db, params.dateKey);
-  return filterSlotsBySalonCapacity(slots, params.dateKey, treatment.durationMinutes, busy, capGetter);
+  let out = filterSlotsBySalonCapacity(slots, params.dateKey, treatment.durationMinutes, busy, capGetter);
+  const svcBlocks = await loadServiceAgendaBlockIntervalsForDate(db, params.dateKey);
+  out = filterSlotsByServiceAgendaBlocks(out, params.dateKey, treatment.durationMinutes, treatment.id, svcBlocks);
+  return out;
 }
 
 /**
@@ -117,5 +166,8 @@ export async function computeBookableSlotsForTreatmentIds(
   }
   const busy = await loadBusyIntervalsMs(db, params.dateKey, excludeId);
   const capGetter = await buildCapGetterForDate(db, params.dateKey);
-  return filterSlotsBySalonCapacity(slots, params.dateKey, totalDuration, busy, capGetter);
+  let out = filterSlotsBySalonCapacity(slots, params.dateKey, totalDuration, busy, capGetter);
+  const svcBlocks = await loadServiceAgendaBlockIntervalsForDate(db, params.dateKey);
+  out = filterSlotsByServiceAgendaBlocksCombo(out, params.dateKey, totalDuration, ids, svcBlocks);
+  return out;
 }

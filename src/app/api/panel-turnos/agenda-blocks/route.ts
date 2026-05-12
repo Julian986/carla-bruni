@@ -6,6 +6,7 @@ import {
   insertAgendaBlock,
   type AgendaBlockScope,
 } from "@/lib/booking/agenda-blocks";
+import { getSalonWorkDayBlockRange } from "@/lib/booking/salon-availability";
 import { getDb } from "@/lib/mongodb";
 import { verifyPanelCookie } from "@/lib/panel-turnos-auth";
 
@@ -14,6 +15,17 @@ export const dynamic = "force-dynamic";
 function parseScope(v: unknown): AgendaBlockScope | null {
   if (v === "salon" || v === "chair_1" || v === "chair_2") return v;
   return null;
+}
+
+function parseBlockedTreatmentIds(v: unknown): string[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: string[] = [];
+  for (const x of v) {
+    if (typeof x !== "string") continue;
+    const id = x.trim();
+    if (id) out.push(id);
+  }
+  return out.length ? out : null;
 }
 
 export async function POST(request: Request) {
@@ -34,17 +46,33 @@ export async function POST(request: Request) {
   const b = body as Record<string, unknown>;
 
   const anchorDateKey = typeof b.anchorDateKey === "string" ? b.anchorDateKey.trim() : "";
+  const timeMode = typeof b.timeMode === "string" ? b.timeMode.trim() : "custom";
+  const useWorkDayRange = timeMode === "all_day";
   const timeLocal = typeof b.timeLocal === "string" ? b.timeLocal.trim() : "";
   const durationMinutes = Number(b.durationMinutes);
   const scope = parseScope(b.scope);
   const notes = b.notes == null ? null : typeof b.notes === "string" ? b.notes : null;
+  const blockedTreatmentIds = parseBlockedTreatmentIds(b.blockedTreatmentIds);
 
   const recurrenceType = typeof b.recurrenceType === "string" ? b.recurrenceType.trim() : "once";
   const untilDateKey =
     typeof b.untilDateKey === "string" && b.untilDateKey.trim() ? b.untilDateKey.trim() : null;
 
-  if (!anchorDateKey || !timeLocal || !scope) {
+  if (!anchorDateKey || !scope) {
     return NextResponse.json({ error: "Faltan datos obligatorios." }, { status: 400 });
+  }
+
+  if (!useWorkDayRange) {
+    if (!timeLocal) {
+      return NextResponse.json({ error: "Falta horario de inicio." }, { status: 400 });
+    }
+  }
+
+  if (useWorkDayRange && !getSalonWorkDayBlockRange(anchorDateKey)) {
+    return NextResponse.json(
+      { error: "Ese día no tiene horario de atención; no se puede usar “todo el día”.", code: "NO_WORKDAY" },
+      { status: 400 },
+    );
   }
 
   let recurrence: null | { type: "weekly"; untilDateKey?: string | null } = null;
@@ -63,6 +91,8 @@ export async function POST(request: Request) {
       scope,
       recurrence,
       notes,
+      blockedTreatmentIds,
+      useWorkDayRange,
     });
     if ("error" in result) {
       return NextResponse.json({ error: result.error, code: result.code }, { status: 400 });

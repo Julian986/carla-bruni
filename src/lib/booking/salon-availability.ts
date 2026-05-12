@@ -41,6 +41,16 @@ function hhmmToMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
+/** Inicio del primer turno posible y duración hasta el cierre de servicios (p. ej. bloqueo “todo el día”). */
+export function getSalonWorkDayBlockRange(dateKey: string): { timeLocal: string; durationMinutes: number } | null {
+  const slots = getAvailableTimesForDate(dateKey);
+  if (slots.length === 0) return null;
+  const startMins = hhmmToMinutes(slots[0]);
+  const endMins = SALON_LAST_SERVICE_END_MINUTES;
+  if (endMins <= startMins) return null;
+  return { timeLocal: slots[0], durationMinutes: endMins - startMins };
+}
+
 /** Inicios de turno cada `SLOT_STEP_MINUTES`, con `open` inclusive y `close` exclusive (ej. 9:00–16:00). */
 function buildStepSlots(openH: number, openM: number, closeH: number, closeM: number): string[] {
   let t = openH * 60 + openM;

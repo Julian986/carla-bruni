@@ -51,6 +51,7 @@ function serializeAgendaBlock(b: SalonAgendaBlockDoc) {
     timeLocal: b.timeLocal,
     durationMinutes: b.durationMinutes,
     scope: b.scope,
+    blockedTreatmentIds: b.blockedTreatmentIds?.length ? b.blockedTreatmentIds : null,
     recurrence: b.recurrence ?? null,
     notes: b.notes ?? null,
   };

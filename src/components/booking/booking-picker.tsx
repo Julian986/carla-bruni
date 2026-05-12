@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { TreatmentCategory } from "@/lib/treatments/catalog";
 import {
@@ -45,6 +45,19 @@ export type BookingPickerProps = {
   comboHintText?: string;
   comboDurationLabel?: string;
   comboAlertText?: string | null;
+  /** Si es `false`, solo se muestra el selector de servicio (mismo modal que turnos), sin calendario ni horarios. */
+  showDateAndTimePickers?: boolean;
+  /** Texto sobre el título del paso de servicio (por defecto "Paso 1"). */
+  treatmentStepOverline?: string;
+  /**
+   * Cada vez que cambia (p. ej. contador incrementado), abre el modal de tratamientos.
+   * Útil para enlazar la apertura con otra UI (ej. elegir “solo algunos tratamientos”).
+   */
+  openTreatmentModalRequestId?: number;
+  /** Oculta el botón principal de servicio (p. ej. bloqueo de agenda con apertura externa). */
+  hideTreatmentTriggerButton?: boolean;
+  /** Estética del sheet modal de tratamientos: `panel` alinea con el panel de bloqueo. */
+  treatmentModalVariant?: "booking" | "panel";
 };
 
 export function BookingPicker({
@@ -71,7 +84,14 @@ export function BookingPicker({
   comboHintText,
   comboDurationLabel,
   comboAlertText,
+  showDateAndTimePickers = true,
+  treatmentStepOverline = "Paso 1",
+  openTreatmentModalRequestId,
+  hideTreatmentTriggerButton = false,
+  treatmentModalVariant = "booking",
 }: BookingPickerProps) {
+  const isPanelTreatmentModal = treatmentModalVariant === "panel";
+  const lastOpenTreatmentModalRequestRef = useRef<number | undefined>(undefined);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -99,6 +119,10 @@ export function BookingPicker({
   const visibleMonthLabel = `${salonMonthNames[visibleMonthDate.getMonth()]} ${visibleMonthDate.getFullYear()}`;
 
   useEffect(() => {
+    if (!showDateAndTimePickers) {
+      setMonthAvailability(undefined);
+      return;
+    }
     if (!selectedTreatmentId.trim() && monthAvailabilityServiceIds.length === 0) {
       setMonthAvailability(undefined);
       return;
@@ -137,9 +161,16 @@ export function BookingPicker({
       cancelled = true;
       ac.abort();
     };
-  }, [selectedTreatmentId, visibleMonthDate, bookingContext, monthAvailabilityServiceIds]);
+  }, [
+    showDateAndTimePickers,
+    selectedTreatmentId,
+    visibleMonthDate,
+    bookingContext,
+    monthAvailabilityServiceIds,
+  ]);
 
   useEffect(() => {
+    if (!showDateAndTimePickers) return;
     if (!selectedDate || !selectedTreatmentId.trim()) return;
     if (monthAvailability === undefined || monthAvailability === null) return;
     if (monthAvailability[selectedDate] === false) {
@@ -161,18 +192,30 @@ export function BookingPicker({
     : [];
   const isSelectedDateHoliday = Boolean(selectedDate && isArgentinaPublicHoliday(selectedDate));
 
-  const activeStep = !selectedTreatment
-    ? 1
-    : !selectedDate
-      ? 2
-      : !selectedTime
-        ? 3
-        : 4;
+  const activeStep = showDateAndTimePickers
+    ? !selectedTreatment
+      ? 1
+      : !selectedDate
+        ? 2
+        : !selectedTime
+          ? 3
+          : 4
+    : 1;
 
   const openTreatmentModal = () => {
     setActiveTreatmentCategory(selectedTreatment?.category ?? null);
     setIsTreatmentModalOpen(true);
   };
+
+  useEffect(() => {
+    if (openTreatmentModalRequestId === undefined) return;
+    if (lastOpenTreatmentModalRequestRef.current === openTreatmentModalRequestId) return;
+    lastOpenTreatmentModalRequestRef.current = openTreatmentModalRequestId;
+    const cat =
+      SALON_TREATMENT_OPTIONS.find((option) => option.id === selectedTreatmentId)?.category ?? null;
+    setActiveTreatmentCategory(cat);
+    setIsTreatmentModalOpen(true);
+  }, [openTreatmentModalRequestId, selectedTreatmentId]);
 
   const closeTreatmentModal = () => {
     setIsTreatmentModalOpen(false);
@@ -188,70 +231,132 @@ export function BookingPicker({
     closeTreatmentModal();
   };
 
+  const showTreatmentStepSection = !hideTreatmentTriggerButton || showDateAndTimePickers;
+
+  const tmBackdrop = isPanelTreatmentModal
+    ? "fixed inset-0 z-40 flex items-end bg-[#0a0a0a]/78 backdrop-blur-[2px]"
+    : "fixed inset-0 z-40 flex items-end bg-black/60 backdrop-blur-[3px]";
+  const tmSheet = isPanelTreatmentModal
+    ? "relative w-full rounded-t-[28px] border-t border-white/10 bg-[#171717] px-4 pt-3 pb-6 shadow-[0_-26px_55px_rgba(0,0,0,0.58)]"
+    : "relative w-full rounded-t-[32px] border-t border-white/8 bg-[#161616] px-4 pt-3 pb-6 shadow-[0_-18px_40px_rgba(0,0,0,0.45)]";
+  const tmHandle = isPanelTreatmentModal
+    ? "mx-auto mb-4 h-1.5 w-14 rounded-full bg-gradient-to-r from-amber-500/45 to-orange-600/40"
+    : "mx-auto mb-4 h-1.5 w-14 rounded-full bg-white/12";
+  const tmIconBtn = isPanelTreatmentModal
+    ? "cursor-pointer rounded-lg p-1 text-[var(--soft-gray)]/80 hover:bg-white/8"
+    : "cursor-pointer rounded-lg p-1 text-[var(--soft-gray)]/75 hover:bg-white/5";
+  const tmCloseBtn = isPanelTreatmentModal
+    ? "cursor-pointer rounded-lg px-2 py-1 text-[13px] text-[var(--soft-gray)]/72 hover:bg-white/8"
+    : "cursor-pointer rounded-lg px-2 py-1 text-[13px] text-[var(--soft-gray)]/75 hover:bg-white/5";
+  const tmTitle = isPanelTreatmentModal
+    ? "flex-1 min-w-0 text-center text-[22px] leading-none font-heading text-[var(--premium-gold)]"
+    : "flex-1 min-w-0 text-center text-[26px] leading-none font-heading text-[var(--soft-gray)]";
+  const tmSummaryBox = isPanelTreatmentModal
+    ? "mb-3 rounded-xl border border-white/10 bg-[#141414] px-3 py-2"
+    : "mb-3 rounded-xl border border-white/10 bg-[#1b1b1b] px-3 py-2";
+  const tmCountAccent = isPanelTreatmentModal
+    ? "font-medium text-amber-400/95"
+    : "font-medium text-[var(--premium-gold)]";
+  const tmDurAccent = isPanelTreatmentModal
+    ? "text-[13px] font-semibold text-amber-300/95"
+    : "text-[13px] font-semibold text-[var(--premium-gold)]/95";
+  const tmTrash = isPanelTreatmentModal
+    ? "shrink-0 cursor-pointer rounded-lg border border-white/12 bg-[#1a1a1a] p-1.5 text-[var(--soft-gray)]/70 transition hover:border-red-400/40 hover:bg-red-950/30 hover:text-red-300/95"
+    : "shrink-0 cursor-pointer rounded-lg border border-red-400/35 bg-red-950/25 p-1.5 text-red-300/90 transition hover:bg-red-950/40";
+  const tmAlert = isPanelTreatmentModal
+    ? "mb-2 rounded-xl border border-amber-500/35 bg-[#141414] px-3 py-3 text-center text-[14px] text-amber-200/95"
+    : "mb-2 rounded-xl border border-amber-500/45 bg-amber-950/95 px-3 py-3 text-center text-[14px] text-amber-100 shadow-[0_14px_34px_rgba(0,0,0,0.48)]";
+  const tmTreatSelected = isPanelTreatmentModal
+    ? "border-amber-500/50 bg-gradient-to-br from-amber-950/40 to-orange-950/25"
+    : "border-[var(--premium-gold)] bg-[rgba(201,169,106,0.1)]";
+  const tmTreatIdle = isPanelTreatmentModal
+    ? "border-white/10 bg-[#141414] hover:border-amber-500/35 hover:bg-[#191919]"
+    : "border-white/8 bg-[#1c1c1c]";
+  const tmCatBtn = isPanelTreatmentModal
+    ? "flex w-full cursor-pointer items-center justify-between rounded-xl border border-white/10 bg-[#141414] px-4 py-4 text-left transition hover:border-amber-500/35 hover:bg-[#1a1a1a]"
+    : "flex w-full cursor-pointer items-center justify-between rounded-2xl border border-white/8 bg-[#1c1c1c] px-4 py-4 text-left hover:bg-[#222]";
+  const tmCatTitle = isPanelTreatmentModal
+    ? "text-[18px] leading-none font-heading text-[var(--soft-gray)]"
+    : "text-[20px] leading-none font-heading text-[var(--soft-gray)]";
+  const tmContinuarOn = isPanelTreatmentModal
+    ? "cursor-pointer bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-[0_10px_26px_rgba(180,83,9,0.38)]"
+    : "cursor-pointer bg-[var(--premium-gold)] text-black shadow-[0_8px_22px_rgba(201,169,106,0.28)]";
+  const tmContinuarOff = isPanelTreatmentModal
+    ? "cursor-not-allowed bg-[#252525] text-white/35"
+    : "cursor-not-allowed bg-[#2a2a2a] text-white/40";
+
   return (
     <>
-      <section className="space-y-2">
-        <button
-          type="button"
-          onClick={openTreatmentModal}
-          className={`flex w-full cursor-pointer items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 text-left transition-all ${
-            activeStep === 1
-              ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
-              : "border-white/8"
-          }`}
-        >
-          <div>
-            <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">Paso 1</p>
-            <p className="mt-1 text-[14px] text-[var(--soft-gray)]">
-              {summaryTitle ?? (selectedTreatment ? selectedTreatment.name : "Elegí servicio")}
-            </p>
-            {selectedCountLabel ? (
-              <p className="mt-1 text-[11px] text-[var(--soft-gray)]/55">{selectedCountLabel}</p>
-            ) : selectedTreatment ? (
-              <p className="mt-1 text-[11px] text-[var(--soft-gray)]/55">
-                {selectedTreatment.category} · {selectedTreatment.subtitle}
-              </p>
-            ) : null}
-            {selectedDurationLabel ? (
-              <div className="mt-2 inline-flex items-center rounded-full border border-[var(--premium-gold)]/55 bg-[var(--premium-gold)]/12 px-2.5 py-1">
-                <span className="text-[11px] font-semibold tracking-[0.02em] text-[var(--premium-gold)]">
-                  {selectedDurationLabel}
-                </span>
+      {showTreatmentStepSection ? (
+        <section className="space-y-2">
+          {!hideTreatmentTriggerButton ? (
+            <button
+              type="button"
+              onClick={openTreatmentModal}
+              className={`flex w-full cursor-pointer items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 text-left transition-all ${
+                activeStep === 1
+                  ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
+                  : "border-white/8"
+              }`}
+            >
+              <div>
+                <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">{treatmentStepOverline}</p>
+                <p className="mt-1 text-[14px] text-[var(--soft-gray)]">
+                  {summaryTitle ?? (selectedTreatment ? selectedTreatment.name : "Elegí servicio")}
+                </p>
+                {selectedCountLabel ? (
+                  <p className="mt-1 text-[11px] text-[var(--soft-gray)]/55">{selectedCountLabel}</p>
+                ) : selectedTreatment ? (
+                  <p className="mt-1 text-[11px] text-[var(--soft-gray)]/55">
+                    {selectedTreatment.category} · {selectedTreatment.subtitle}
+                  </p>
+                ) : null}
+                {selectedDurationLabel ? (
+                  <div className="mt-2 inline-flex items-center rounded-full border border-[var(--premium-gold)]/55 bg-[var(--premium-gold)]/12 px-2.5 py-1">
+                    <span className="text-[11px] font-semibold tracking-[0.02em] text-[var(--premium-gold)]">
+                      {selectedDurationLabel}
+                    </span>
+                  </div>
+                ) : null}
+                {activeStep === 1 && (
+                  <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--premium-gold)]/92">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--premium-gold)]" />
+                    <span>Comenzá seleccionando el servicio</span>
+                  </div>
+                )}
               </div>
-            ) : null}
-            {activeStep === 1 && (
-              <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--premium-gold)]/92">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--premium-gold)]" />
-                <span>Comenzá seleccionando el servicio</span>
-              </div>
-            )}
-          </div>
-          <ChevronRight className="h-4 w-4 text-[var(--soft-gray)]/60" strokeWidth={1.8} />
-        </button>
+              <ChevronRight className="h-4 w-4 text-[var(--soft-gray)]/60" strokeWidth={1.8} />
+            </button>
+          ) : null}
 
-        <div
-          className={`flex items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 transition-all ${
-            activeStep === 2
-              ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
-              : "border-white/8"
-          }`}
-        >
-          <div>
-            <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">Paso 2</p>
-            <p className="mt-1 text-[14px] text-[var(--soft-gray)]">
-              {selectedDate ? formatSalonDisplayDate(selectedDate) : "Elegí día"}
-            </p>
-            {activeStep === 2 && (
-              <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--premium-gold)]/92">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--premium-gold)]" />
-                <span>Ahora elegí una fecha disponible</span>
+          {showDateAndTimePickers ? (
+            <div
+              className={`flex items-center justify-between rounded-2xl border bg-[#171717] px-4 py-3 transition-all ${
+                activeStep === 2
+                  ? "border-[var(--premium-gold)] shadow-[0_0_0_1px_rgba(201,169,106,0.22),0_0_22px_rgba(201,169,106,0.18)]"
+                  : "border-white/8"
+              }`}
+            >
+              <div>
+                <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">Paso 2</p>
+                <p className="mt-1 text-[14px] text-[var(--soft-gray)]">
+                  {selectedDate ? formatSalonDisplayDate(selectedDate) : "Elegí día"}
+                </p>
+                {activeStep === 2 && (
+                  <div className="mt-2 flex items-center gap-2 text-[11px] text-[var(--premium-gold)]/92">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--premium-gold)]" />
+                    <span>Ahora elegí una fecha disponible</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <ChevronRight className="h-4 w-4 rotate-90 text-[var(--soft-gray)]/60" strokeWidth={1.8} />
-        </div>
-      </section>
+              <ChevronRight className="h-4 w-4 rotate-90 text-[var(--soft-gray)]/60" strokeWidth={1.8} />
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
+      {showDateAndTimePickers ? (
+        <>
       <section className="mt-4 overflow-hidden rounded-[24px] border border-white/8 bg-[#e4c48f] p-3 text-[#2c241b] shadow-[0_12px_26px_rgba(0,0,0,0.36)]">
         <div className="mb-3 flex items-center justify-between">
           <button
@@ -455,9 +560,11 @@ export function BookingPicker({
           </div>
         </section>
       </div>
+        </>
+      ) : null}
 
       {isTreatmentModalOpen && (
-        <div className="fixed inset-0 z-40 flex items-end bg-black/60 backdrop-blur-[3px]">
+        <div className={tmBackdrop}>
           <button
             type="button"
             aria-label="Cerrar selector de servicio"
@@ -465,50 +572,40 @@ export function BookingPicker({
             className="absolute inset-0 cursor-pointer bg-transparent"
           />
 
-          <div className="relative w-full rounded-t-[32px] border-t border-white/8 bg-[#161616] px-4 pt-3 pb-6 shadow-[0_-18px_40px_rgba(0,0,0,0.45)]">
-            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-white/12" />
+          <div className={tmSheet}>
+            <div className={tmHandle} />
 
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-2">
               {activeTreatmentCategory ? (
                 <button
                   type="button"
                   onClick={() => setActiveTreatmentCategory(null)}
-                  className="cursor-pointer rounded-lg p-1 text-[var(--soft-gray)]/75 hover:bg-white/5"
+                  className={tmIconBtn}
                   aria-label="Volver a categorías"
                 >
                   <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
                 </button>
               ) : (
-                <span className="h-5 w-5" />
+                <span className="h-5 w-5 shrink-0" />
               )}
 
-              <h2 className="text-[26px] leading-none font-heading">
-                {activeTreatmentCategory ?? "Elegí servicio"}
-              </h2>
+              <h2 className={tmTitle}>{activeTreatmentCategory ?? "Elegí servicio"}</h2>
 
-              <button
-                type="button"
-                onClick={closeTreatmentModal}
-                className="cursor-pointer rounded-lg px-2 py-1 text-[13px] text-[var(--soft-gray)]/75 hover:bg-white/5"
-              >
+              <button type="button" onClick={closeTreatmentModal} className={`${tmCloseBtn} shrink-0`}>
                 Cerrar
               </button>
             </div>
             {multiSelect ? (
-              <div className="mb-3 rounded-xl border border-white/10 bg-[#1b1b1b] px-3 py-2">
+              <div className={tmSummaryBox}>
                 <div className="flex items-start justify-between gap-2">
                   <p className="min-w-0 flex-1 text-[12px] leading-snug text-[var(--soft-gray)]/82">
-                    <span className="font-medium text-[var(--premium-gold)]">
-                      {selectedTreatmentIds.length}
-                    </span>{" "}
+                    <span className={tmCountAccent}>{selectedTreatmentIds.length}</span>{" "}
                     seleccionados
                     {comboDurationLabel ? (
                       <span className="text-[var(--soft-gray)]/58">
                         {" "}
                         ·{" "}
-                        <span className="text-[13px] font-semibold text-[var(--premium-gold)]/95">
-                          {comboDurationLabel}
-                        </span>
+                        <span className={tmDurAccent}>{comboDurationLabel}</span>
                       </span>
                     ) : null}
                     {summaryTitle ? <span className="text-[var(--soft-gray)]/58"> · {summaryTitle}</span> : null}
@@ -518,7 +615,7 @@ export function BookingPicker({
                       type="button"
                       onClick={onClearTreatmentIds}
                       aria-label="Quitar todos los servicios seleccionados"
-                      className="shrink-0 cursor-pointer rounded-lg border border-red-400/35 bg-red-950/25 p-1.5 text-red-300/90 transition hover:bg-red-950/40"
+                      className={tmTrash}
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2} />
                     </button>
@@ -526,11 +623,7 @@ export function BookingPicker({
                 </div>
               </div>
             ) : null}
-            {multiSelect && comboAlertText ? (
-              <div className="mb-2 rounded-xl border border-amber-500/45 bg-amber-950/95 px-3 py-3 text-center text-[14px] text-amber-100 shadow-[0_14px_34px_rgba(0,0,0,0.48)]">
-                {comboAlertText}
-              </div>
-            ) : null}
+            {multiSelect && comboAlertText ? <div className={tmAlert}>{comboAlertText}</div> : null}
             {activeTreatmentCategory ? (
               <div className="max-h-[52vh] space-y-2 overflow-y-auto pb-2">
                 {visibleTreatments.map((treatment) => {
@@ -544,9 +637,7 @@ export function BookingPicker({
                       type="button"
                       onClick={() => selectTreatment(treatment.id)}
                       className={`w-full cursor-pointer rounded-2xl border px-4 py-3 text-left transition-colors ${
-                        isSelected
-                          ? "border-[var(--premium-gold)] bg-[rgba(201,169,106,0.1)]"
-                          : "border-white/8 bg-[#1c1c1c]"
+                        isSelected ? tmTreatSelected : tmTreatIdle
                       }`}
                     >
                       <p className="text-[16px] leading-tight font-heading text-[var(--soft-gray)]">
@@ -564,10 +655,10 @@ export function BookingPicker({
                     key={category}
                     type="button"
                     onClick={() => setActiveTreatmentCategory(category)}
-                    className="flex w-full cursor-pointer items-center justify-between rounded-2xl border border-white/8 bg-[#1c1c1c] px-4 py-4 text-left hover:bg-[#222]"
+                    className={tmCatBtn}
                   >
                     <div>
-                      <p className="text-[20px] leading-none font-heading text-[var(--soft-gray)]">{category}</p>
+                      <p className={tmCatTitle}>{category}</p>
                       <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">
                         {SALON_TREATMENT_OPTIONS.filter((option) => option.category === category).length} servicios
                       </p>
@@ -584,15 +675,17 @@ export function BookingPicker({
                   disabled={selectedTreatmentIds.length === 0}
                   onClick={closeTreatmentModal}
                   className={`h-11 w-full rounded-xl text-[14px] font-semibold transition ${
-                    selectedTreatmentIds.length > 0
-                      ? "cursor-pointer bg-[var(--premium-gold)] text-black shadow-[0_8px_22px_rgba(201,169,106,0.28)]"
-                      : "cursor-not-allowed bg-[#2a2a2a] text-white/40"
+                    selectedTreatmentIds.length > 0 ? tmContinuarOn : tmContinuarOff
                   }`}
                 >
                   Continuar ({selectedTreatmentIds.length})
                 </button>
                 {selectedTreatmentIds.length > 0 ? (
-                  <p className="mt-1.5 text-center text-[11px] text-[var(--soft-gray)]/55">
+                  <p
+                    className={`mt-1.5 text-center text-[11px] ${
+                      isPanelTreatmentModal ? "text-[var(--soft-gray)]/48" : "text-[var(--soft-gray)]/55"
+                    }`}
+                  >
                     Cuando termines de elegir, tocá Continuar.
                   </p>
                 ) : null}

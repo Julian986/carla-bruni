@@ -21,7 +21,13 @@ const COLLECTION = "reservations";
 export type ReprogramDayRow =
   | { timeLocal: string; kind: "available" }
   | { timeLocal: string; kind: "reserved"; customerName: string; treatmentName: string }
-  | { timeLocal: string; kind: "agenda_block"; scope: string; notes: string | null }
+  | {
+      timeLocal: string;
+      kind: "agenda_block";
+      scope: string;
+      notes: string | null;
+      blockedTreatmentIds?: string[];
+    }
   | { timeLocal: string; kind: "capacity_full" };
 
 /** @deprecated usar `ReprogramDayRow` */
@@ -106,13 +112,21 @@ export async function computeReprogramDayRows(
     .map((doc) => {
       const iv = intervalForAgendaBlockOnDate(doc, dateKey);
       if (!iv) return null;
+      const blocked = doc.blockedTreatmentIds?.map((x) => String(x).trim()).filter(Boolean) ?? [];
+      if (blocked.length > 0 && !blocked.includes(treatment.id)) return null;
       return {
         interval: iv,
         scope: doc.scope,
         notes: doc.notes ?? null,
+        blockedTreatmentIds: blocked.length > 0 ? blocked : undefined,
       };
     })
-    .filter(Boolean) as { interval: IntervalMs; scope: string; notes: string | null }[];
+    .filter(Boolean) as {
+    interval: IntervalMs;
+    scope: string;
+    notes: string | null;
+    blockedTreatmentIds?: string[];
+  }[];
 
   const rows: ReprogramDayRow[] = [];
   for (const t of candidateSlots) {
@@ -142,6 +156,7 @@ export async function computeReprogramDayRows(
         kind: "agenda_block",
         scope: hitAg.scope,
         notes: hitAg.notes,
+        ...(hitAg.blockedTreatmentIds?.length ? { blockedTreatmentIds: hitAg.blockedTreatmentIds } : {}),
       });
       continue;
     }
