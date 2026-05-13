@@ -38,12 +38,18 @@ type ContactItem = {
 const WHATSAPP_PHONE_E164 = "5492235188585";
 const WHATSAPP_DISPLAY = "+54 9 2235 18-8585";
 const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_PHONE_E164}`;
+const INSTAGRAM_HREF = "https://www.instagram.com/carlabruni_dermoestetica/";
+/** Ubicación Espacio Freyja (Google Maps). */
+const MAPS_HREF = "https://maps.app.goo.gl/T21ob5UXKG8U89iG7";
+const MAPS_EMBED_SRC =
+  "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d3144.000570626627!2d-57.54651903277663!3d-38.00044716135305!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9584dc1b4719208b%3A0x4e0df09f3092043b!2sSantiago%20del%20Estero%201741%2C%20B7600DXK%20Mar%20del%20Plata%2C%20Provincia%20de%20Buenos%20Aires!5e0!3m2!1ses!2sar!4v1778642825201!5m2!1ses!2sar";
 
 const contactItems: ContactItem[] = [
   {
     label: "Dirección",
-    description: "Por completar · te avisamos cuando esté el dato",
+    description: "Santiago del Estero 1741, Mar del Plata · piso 2",
     icon: MapPin,
+    href: MAPS_HREF,
   },
   {
     label: "WhatsApp",
@@ -53,8 +59,9 @@ const contactItems: ContactItem[] = [
   },
   {
     label: "Instagram",
-    description: "Escribinos por DM (actualizá el @ cuando tengas el perfil)",
+    description: "@carlabruni_dermoestetica · DM",
     icon: Instagram,
+    href: INSTAGRAM_HREF,
   },
   // {
   //   label: "Horarios",
@@ -127,9 +134,27 @@ export default function ContactoPage() {
           <p className="text-[12px] uppercase tracking-[0.18em] text-[var(--soft-gray)]/70">
             Ubicación en mapa
           </p>
-          <p className="mt-2 rounded-xl border border-white/8 bg-black/30 px-3 py-8 text-center text-[13px] leading-relaxed text-[var(--soft-gray)]/75">
-            Todavía no publicamos la dirección del local. Cuando la tengamos, acá vas a ver el mapa.
+          <p className="mt-2 text-[13px] leading-relaxed text-[var(--soft-gray)]/80">
+            Espacio Freyja · Santiago del Estero 1741, Mar del Plata (piso 2).
           </p>
+          <div className="relative mt-3 w-full overflow-hidden rounded-xl border border-white/10 pb-[75%] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
+            <iframe
+              src={MAPS_EMBED_SRC}
+              title="Ubicación Espacio Freyja · Santiago del Estero 1741, Mar del Plata"
+              className="absolute inset-0 h-full w-full border-0"
+              loading="lazy"
+              allowFullScreen
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <Link
+            href={MAPS_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 flex h-11 w-full items-center justify-center rounded-full border border-white/14 bg-black/25 text-[13px] font-medium tracking-[0.08em] text-[var(--foreground)]"
+          >
+            Abrir en Google Maps
+          </Link>
         </section>
 
         {/*
