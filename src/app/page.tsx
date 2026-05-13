@@ -32,9 +32,6 @@ function SplashScreen({ onLogoReady }: { onLogoReady: () => void }) {
               <span className="mt-1.5 block text-base font-medium tracking-[0.14em] text-[var(--soft-gray)]/95">
                 Dermocosmiatra
               </span>
-              <span className="mt-1.5 block max-w-[18rem] text-xs font-normal leading-snug tracking-[0.04em] text-[var(--soft-gray)]/75">
-                No es lo mismo que cosmetología.
-              </span>
             </div>
             <div className="text-xs tracking-[0.22em] text-[var(--premium-gold)]/90">Espacio Freyja</div>
           </div>
@@ -94,9 +91,6 @@ function HomeContent() {
               <span className="block text-[22px] font-medium leading-tight tracking-[0.06em]">By Carla Bruni</span>
               <span className="mt-0.5 block text-[15px] font-medium tracking-[0.14em] text-[var(--soft-gray)]/95">
                 Dermocosmiatra
-              </span>
-              <span className="mt-1 block max-w-[17rem] px-1 text-[11px] font-normal leading-snug tracking-[0.04em] text-[var(--soft-gray)]/75">
-                No es lo mismo que cosmetología.
               </span>
             </div>
             <div className="text-[11px] tracking-[0.22em] text-[var(--premium-gold)]/90">Espacio Freyja</div>

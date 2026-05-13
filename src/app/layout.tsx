@@ -34,8 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
       default: "Carla Bruni · Espacio Freyja",
       template: "%s | Carla Bruni",
     },
-    description:
-      "Reservá tu turno con Carla Bruni · dermocosmiatra (no es lo mismo que cosmetología) · Espacio Freyja",
+    description: "Reservá tu turno con Carla Bruni · dermocosmiatra · Espacio Freyja",
     icons: {
       icon: [
         { url: `/favicon-64.png?v=${ASSET_V}`, sizes: "64x64", type: "image/png" },
@@ -53,8 +52,7 @@ export async function generateMetadata(): Promise<Metadata> {
       url: `${siteOrigin}/`,
       siteName: "Carla Bruni · Espacio Freyja",
       title: "Carla Bruni · Reserva online",
-      description:
-        "Carla Bruni, dermocosmiatra · Espacio Freyja — no es lo mismo que cosmetología.",
+      description: "Carla Bruni, dermocosmiatra · Espacio Freyja",
       images: [
         {
           url: ogImageAbsolute,

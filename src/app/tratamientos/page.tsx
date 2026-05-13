@@ -59,7 +59,7 @@ export default function TreatmentsPage() {
         </header>
 
         <p className="mb-3 text-center text-[11px] leading-relaxed text-[var(--soft-gray)]/90">
-          Espacio Freyja · Carla Bruni, dermocosmiatra — no es lo mismo que cosmetología. Valores y tiempos orientativos; la indicación
+          Espacio Freyja · Carla Bruni, dermocosmiatra. Valores y tiempos orientativos; la indicación
           final es siempre personalizada.
         </p>
 
