@@ -35,14 +35,14 @@ type ContactItem = {
 };
 
 /** Solo dígitos para wa.me (Argentina: 54 + 9 + código de área + número). */
-const WHATSAPP_PHONE_E164 = "5492235188585";
-const WHATSAPP_DISPLAY = "+54 9 2235 18-8585";
+const WHATSAPP_PHONE_E164 = "5492236164271";
+const WHATSAPP_DISPLAY = "223-6164271";
 const WHATSAPP_HREF = `https://wa.me/${WHATSAPP_PHONE_E164}`;
-const INSTAGRAM_HREF = "https://www.instagram.com/carlabruni_dermoestetica/";
+const INSTAGRAM_HREF = "https://www.instagram.com/freyja.skinbarstudio/";
 /** Ubicación Espacio Freyja (Google Maps). */
-const MAPS_HREF = "https://maps.app.goo.gl/T21ob5UXKG8U89iG7";
+const MAPS_HREF = "https://maps.app.goo.gl/QHSzQD7idPPTGKNp9";
 const MAPS_EMBED_SRC =
-  "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d3144.000570626627!2d-57.54651903277663!3d-38.00044716135305!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9584dc1b4719208b%3A0x4e0df09f3092043b!2sSantiago%20del%20Estero%201741%2C%20B7600DXK%20Mar%20del%20Plata%2C%20Provincia%20de%20Buenos%20Aires!5e0!3m2!1ses!2sar!4v1778642825201!5m2!1ses!2sar";
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3144.0110040597237!2d-57.54634909999999!3d-38.0002038!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9584dd00052cf08f%3A0xa348da825832e30a!2sEspacio%20Freyja%20%E2%80%93%20by%20Carla%20Bruni!5e0!3m2!1ses!2sar!4v1778698252936!5m2!1ses!2sar";
 
 const contactItems: ContactItem[] = [
   {
@@ -59,7 +59,7 @@ const contactItems: ContactItem[] = [
   },
   {
     label: "Instagram",
-    description: "@carlabruni_dermoestetica · DM",
+    description: "@freyja.skinbarstudio · DM",
     icon: Instagram,
     href: INSTAGRAM_HREF,
   },
@@ -140,7 +140,7 @@ export default function ContactoPage() {
           <div className="relative mt-3 w-full overflow-hidden rounded-xl border border-white/10 pb-[75%] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04)]">
             <iframe
               src={MAPS_EMBED_SRC}
-              title="Ubicación Espacio Freyja · Santiago del Estero 1741, Mar del Plata"
+              title="Ubicación Espacio Freyja – by Carla Bruni, Mar del Plata"
               className="absolute inset-0 h-full w-full border-0"
               loading="lazy"
               allowFullScreen

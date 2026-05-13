@@ -8,7 +8,7 @@ import { useState } from "react";
 const FLYER_SRC = "/flyer.jpeg";
 
 const WHATSAPP_LASER =
-  "https://wa.me/542915247730?text=" +
+  "https://wa.me/5492236164271?text=" +
   encodeURIComponent(
     "Hola, te escribo de Carla Bruni · Espacio Freyja. Consulto por depilación láser.",
   );

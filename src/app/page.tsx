@@ -27,10 +27,13 @@ function SplashScreen({ onLogoReady }: { onLogoReady: () => void }) {
               onLoad={onLogoReady}
               onError={onLogoReady}
             />
-            <div className="text-center text-2xl font-medium leading-tight tracking-[0.1em] font-heading">
-              <span className="block">CARLA BRUNI</span>
-              <span className="mt-1 block text-base tracking-[0.18em] text-[var(--soft-gray)]/95">
-                Dermocosmetóloga y esteticista
+            <div className="text-center font-heading">
+              <span className="block text-2xl font-medium leading-tight tracking-[0.06em]">By Carla Bruni</span>
+              <span className="mt-1.5 block text-base font-medium tracking-[0.14em] text-[var(--soft-gray)]/95">
+                Dermocosmiatra
+              </span>
+              <span className="mt-1.5 block max-w-[18rem] text-xs font-normal leading-snug tracking-[0.04em] text-[var(--soft-gray)]/75">
+                No es lo mismo que cosmetología.
               </span>
             </div>
             <div className="text-xs tracking-[0.22em] text-[var(--premium-gold)]/90">Espacio Freyja</div>
@@ -87,10 +90,13 @@ function HomeContent() {
         <header className="flex justify-center">
           <div className="inline-flex max-w-full flex-col items-center gap-2.5 text-center max-md:[text-shadow:0_1px_8px_rgba(0,0,0,0.35)] md:[text-shadow:none]">
             <BrandLogo size="header" />
-            <div className="text-center text-[22px] font-medium leading-tight tracking-[0.1em] text-[var(--foreground)] font-heading">
-              <span className="block">CARLA BRUNI</span>
-              <span className="mt-0.5 block text-[15px] font-normal tracking-[0.14em] text-[var(--soft-gray)]/95">
-                Dermocosmetóloga y esteticista
+            <div className="text-center font-heading text-[var(--foreground)]">
+              <span className="block text-[22px] font-medium leading-tight tracking-[0.06em]">By Carla Bruni</span>
+              <span className="mt-0.5 block text-[15px] font-medium tracking-[0.14em] text-[var(--soft-gray)]/95">
+                Dermocosmiatra
+              </span>
+              <span className="mt-1 block max-w-[17rem] px-1 text-[11px] font-normal leading-snug tracking-[0.04em] text-[var(--soft-gray)]/75">
+                No es lo mismo que cosmetología.
               </span>
             </div>
             <div className="text-[11px] tracking-[0.22em] text-[var(--premium-gold)]/90">Espacio Freyja</div>
@@ -99,7 +105,7 @@ function HomeContent() {
 
         <div className="mt-12 space-y-4 md:mt-14">
           <section className="pb-1">
-            <h1 className="sr-only">Carla Bruni · Espacio Freyja</h1>
+            <h1 className="sr-only">By Carla Bruni · Espacio Freyja</h1>
             <div className="mx-auto flex w-[84%] flex-col gap-3">
               <Link
                 href="/turnos"

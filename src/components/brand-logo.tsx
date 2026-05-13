@@ -13,7 +13,7 @@ const sizeClass = {
   /** Pantalla de bienvenida: prioridad visual sobre el nombre (pedido de marca). */
   splash:
     "h-60 w-60 max-h-[min(68vw,320px)] max-w-[min(68vw,320px)] sm:h-[19rem] sm:w-[19rem] sm:max-h-[380px] sm:max-w-[380px]",
-  /** Cabecera de inicio: logo claramente más grande que la línea «CARLA BRUNI». */
+  /** Cabecera de inicio: logo claramente más grande que la línea «By Carla Bruni». */
   header: "h-44 w-44 sm:h-[11.5rem] sm:w-[11.5rem]",
   /** Cabeceras de página secundarias */
   page: "h-28 w-28",
@@ -32,7 +32,7 @@ type BrandLogoProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt" | 
 export function BrandLogo({
   size = "header",
   className = "",
-  alt = "Carla Bruni · Dermocosmetóloga y esteticista",
+  alt = "By Carla Bruni · Dermocosmiatra",
   onClick: onClickProp,
   ...imgRest
 }: BrandLogoProps) {
