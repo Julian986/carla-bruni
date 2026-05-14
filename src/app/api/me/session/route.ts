@@ -78,29 +78,43 @@ export async function POST(request: Request) {
     // Si la DB falla no bloqueamos el login.
   }
 
-  const token = mintCustomerProfileToken(digits);
-  const cookieStore = await cookies();
-  cookieStore.set(CUSTOMER_PROFILE_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 24 * 60 * 60,
-  });
-
   try {
-    const db = await getDb();
-    await logCustomerSessionStart(db, {
-      phoneDigits: digits,
-      userAgent: request.headers.get("user-agent"),
-      source,
-      customerName,
+    const token = mintCustomerProfileToken(digits);
+    const cookieStore = await cookies();
+    cookieStore.set(CUSTOMER_PROFILE_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 24 * 60 * 60,
     });
-  } catch (e) {
-    console.error("[api/me/session] analytics", e);
-  }
 
-  return NextResponse.json({ ok: true as const });
+    try {
+      const db = await getDb();
+      await logCustomerSessionStart(db, {
+        phoneDigits: digits,
+        userAgent: request.headers.get("user-agent"),
+        source,
+        customerName,
+      });
+    } catch (e) {
+      console.error("[api/me/session] analytics", e);
+    }
+
+    return NextResponse.json({ ok: true as const });
+  } catch (e) {
+    console.error("[api/me/session] cookie o token", e);
+    const isMissingSecret =
+      e instanceof Error && e.message.includes("CUSTOMER_SESSION_SECRET");
+    return NextResponse.json(
+      {
+        error: isMissingSecret
+          ? "Falta CUSTOMER_SESSION_SECRET en el servidor (variables de entorno del hosting). Sin eso no se puede iniciar sesión en producción."
+          : "No pudimos completar el inicio de sesión. Probá más tarde.",
+      },
+      { status: 500 },
+    );
+  }
 }
 
 export async function DELETE() {

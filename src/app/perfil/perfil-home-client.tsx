@@ -30,7 +30,18 @@ export function PerfilHomeClient() {
         credentials: "same-origin",
         body: JSON.stringify({ phone: phoneInput.trim(), source: "perfil" }),
       });
-      const data = (await res.json()) as { error?: string };
+      const raw = await res.text();
+      let data: { error?: string } = {};
+      if (raw) {
+        try {
+          data = JSON.parse(raw) as { error?: string };
+        } catch {
+          setError(
+            `El servidor respondió de forma inesperada (${res.status}). Si usás el sitio publicado, revisá que las variables de entorno estén cargadas y redeployá.`,
+          );
+          return;
+        }
+      }
       if (!res.ok) {
         setError(data.error ?? "No se pudo iniciar sesión.");
         return;
