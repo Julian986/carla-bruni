@@ -85,6 +85,17 @@ export const SALON_TREATMENTS: SalonTreatment[] = [
     imageUrl: IMG.tech,
   },
   {
+    id: "freyja-sesion-corporal-30",
+    name: "Freyja · Sesión corporal",
+    subtitle: "30′ · consultar valor",
+    description:
+      "Sesión corporal en formato 30 minutos: trabajo focalizado según indicación, con la misma línea Low Cost del espacio — accesible y bien encuadrado.",
+    category: "Freyja · Low Cost",
+    durationLabel: "30′",
+    durationMinutes: 30,
+    imageUrl: IMG.corporal,
+  },
+  {
     id: "freyja-consulta-analisis-primera-piel",
     name: "FREYJA · Consulta, análisis y primera piel",
     subtitle: "90′ · $65.000",
