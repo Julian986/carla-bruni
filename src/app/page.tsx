@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { HomeTestimonials } from "@/components/home-testimonials";
 import { HOME_HERO_IMAGE_URL } from "@/lib/home-hero-image";
 import { CalendarDays, Home as HomeIcon, Percent, Sparkles, User } from "lucide-react";
 import Image from "next/image";
@@ -130,6 +131,8 @@ function HomeContent() {
               Contacto
             </Link>
           </section>
+
+          <HomeTestimonials />
 
           <section className="mx-auto w-[84%]">
             <div className="mb-3 text-[10px] tracking-[0.24em] text-[var(--soft-gray)]/70">
