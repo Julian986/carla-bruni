@@ -7,6 +7,7 @@ import {
   agendaBlockAppliesToDateKey,
   parseDateKeyLocal,
 } from "@/lib/booking/agenda-blocks-shared";
+import { ensureDefaultWeekdayClosureBlocks } from "@/lib/booking/weekday-closure-blocks";
 import { formatSalonDisplayDate, getSalonWorkDayBlockRange } from "@/lib/booking/salon-availability";
 import { findSalonTreatmentById } from "@/lib/treatments/catalog";
 import { salonConcurrentCapAtInstant, slotIntervalMs, type IntervalMs } from "@/lib/booking/slot-overlap";
@@ -41,6 +42,7 @@ export type ExpandedAgendaBlocks = {
 
 const INDEXES_VERSION = 1;
 let indexesApplied = 0;
+let weekdayClosureSeedChecked = false;
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -52,11 +54,19 @@ export function intervalForAgendaBlockOnDate(doc: SalonAgendaBlockDoc, dateKey: 
 }
 
 export async function ensureAgendaBlockIndexes(db: Db) {
-  if (indexesApplied >= INDEXES_VERSION) return;
-  const col = db.collection(AGENDA_BLOCKS_COLLECTION);
-  await col.createIndex({ anchorDateKey: 1 }, { name: "ab_anchor" });
-  await col.createIndex({ "recurrence.type": 1, anchorWeekday: 1, anchorDateKey: 1 }, { name: "ab_weekly_lookup" });
-  indexesApplied = INDEXES_VERSION;
+  if (indexesApplied < INDEXES_VERSION) {
+    const col = db.collection(AGENDA_BLOCKS_COLLECTION);
+    await col.createIndex({ anchorDateKey: 1 }, { name: "ab_anchor" });
+    await col.createIndex(
+      { "recurrence.type": 1, anchorWeekday: 1, anchorDateKey: 1 },
+      { name: "ab_weekly_lookup" },
+    );
+    indexesApplied = INDEXES_VERSION;
+  }
+  if (!weekdayClosureSeedChecked) {
+    weekdayClosureSeedChecked = true;
+    await ensureDefaultWeekdayClosureBlocks(db);
+  }
 }
 
 export async function loadExpandedAgendaBlocksForDate(db: Db, dateKey: string): Promise<ExpandedAgendaBlocks> {
@@ -170,22 +180,18 @@ function instantInsideOpenInterval(iv: IntervalMs, instantMs: number): boolean {
   return iv.startMs < instantMs && instantMs < iv.endMs;
 }
 
-/** Capacidad efectiva de turnos simultáneos según bloqueos de agenda (silla / salón). */
+/** Capacidad efectiva (máx. 1 turno simultáneo; bloqueos de agenda bajan a 0). */
 export function buildEffectiveCapGetter(
   dateKey: string,
   expanded: ExpandedAgendaBlocks,
 ): (instantMs: number) => number {
   return (instantMs: number) => {
-    const base = salonConcurrentCapAtInstant(dateKey, instantMs);
     const salonHit = expanded.salon.some((iv) => instantInsideOpenInterval(iv, instantMs));
     if (salonHit) return 0;
     const c1 = expanded.chair1.some((iv) => instantInsideOpenInterval(iv, instantMs));
     const c2 = expanded.chair2.some((iv) => instantInsideOpenInterval(iv, instantMs));
-    const chairsTaken = (c1 ? 1 : 0) + (c2 ? 1 : 0);
-    if (base === 1) {
-      return chairsTaken > 0 ? 0 : 1;
-    }
-    return Math.max(0, 2 - chairsTaken);
+    if (c1 || c2) return 0;
+    return salonConcurrentCapAtInstant(dateKey, instantMs);
   };
 }
 
@@ -244,6 +250,7 @@ export type InsertAgendaBlockInput = {
   blockedTreatmentIds?: string[] | null;
   /** Si true, se ignoran `timeLocal` y `durationMinutes` del input y se usa el día laboral del salón. */
   useWorkDayRange?: boolean;
+  createdBy?: string | null;
 };
 
 export async function insertAgendaBlock(
@@ -324,7 +331,8 @@ export async function insertAgendaBlock(
 
   await ensureAgendaBlockIndexes(db);
   const now = new Date();
-  const createdBy = (process.env.PANEL_TURNOS_CREATED_BY ?? "panel").trim() || "panel";
+  const createdBy =
+    input.createdBy?.trim() || (process.env.PANEL_TURNOS_CREATED_BY ?? "panel").trim() || "panel";
 
   const doc = {
     anchorDateKey,

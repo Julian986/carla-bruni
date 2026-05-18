@@ -46,3 +46,19 @@ export function agendaBlockAppliesToDateKey(doc: AgendaBlockRule, dateKey: strin
   if (until && dateKey > until) return false;
   return true;
 }
+
+function minutesToHhmmLocal(totalMinutes: number): string {
+  const m = ((totalMinutes % (24 * 60)) + 24 * 60) % (24 * 60);
+  const h = Math.floor(m / 60);
+  const min = m % 60;
+  return `${String(h).padStart(2, "0")}:${String(min).padStart(2, "0")}`;
+}
+
+/** Rango legible para bloqueos (ej. `08:30 – 16:30`). */
+export function formatAgendaBlockTimeRange(timeLocal: string, durationMinutes: number): string {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(timeLocal.trim());
+  if (!match || !Number.isFinite(durationMinutes) || durationMinutes <= 0) return timeLocal.trim();
+  const startM = Number(match[1]) * 60 + Number(match[2]);
+  const endM = startM + Math.round(durationMinutes);
+  return `${minutesToHhmmLocal(startM)} – ${minutesToHhmmLocal(endM)}`;
+}

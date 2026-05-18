@@ -20,13 +20,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { agendaBlockAppliesToDateKey } from "@/lib/booking/agenda-blocks-shared";
+import {
+  agendaBlockAppliesToDateKey,
+  formatAgendaBlockTimeRange,
+} from "@/lib/booking/agenda-blocks-shared";
+import { isSystemWeekdayClosureBlock } from "@/lib/booking/weekday-closure-blocks-shared";
 import {
   PANEL_WEEK_LETTERS,
   buildPanelMonthGrid,
   panelMonthTitle,
 } from "@/lib/booking/panel-month-grid";
 import { findSalonTreatmentById, panelDurationLabel } from "@/lib/treatments/catalog";
+
+import { PanelPublicBookingMode } from "./panel-public-booking-mode";
 
 export type PanelReservation = {
   id: string;
@@ -57,9 +63,12 @@ export type PanelAgendaBlock = {
   blockedTreatmentIds?: string[] | null;
   recurrence: { type: "weekly"; untilDateKey?: string | null } | null;
   notes?: string | null;
+  createdBy?: string | null;
 };
 
 type DayRow = { kind: "reservation"; item: PanelReservation } | { kind: "block"; item: PanelAgendaBlock };
+
+type DayCalendarMarker = "turno" | "block" | "both";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -267,18 +276,28 @@ export function PanelTurnosDashboard() {
     return list.filter((r) => r.reservationStatus !== "cancelled");
   }, [list, showCancelled]);
 
-  const combinedCountsByDay = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const r of visibleReservations) {
-      m.set(r.dateKey, (m.get(r.dateKey) ?? 0) + 1);
-    }
+  /** Turno = punto dorado; bloqueo = punto celeste; ambos = los dos puntos. */
+  const dayCalendarMarkers = useMemo(() => {
+    const hasTurno = new Set<string>();
+    for (const r of visibleReservations) hasTurno.add(r.dateKey);
+
+    const hasBlock = new Set<string>();
     for (const cell of grid) {
-      const key = cell.dateKey;
       for (const b of agendaBlocks) {
-        if (agendaBlockAppliesToDateKey(b, key)) {
-          m.set(key, (m.get(key) ?? 0) + 1);
+        if (agendaBlockAppliesToDateKey(b, cell.dateKey)) {
+          hasBlock.add(cell.dateKey);
+          break;
         }
       }
+    }
+
+    const m = new Map<string, DayCalendarMarker>();
+    for (const key of new Set([...hasTurno, ...hasBlock])) {
+      const t = hasTurno.has(key);
+      const bl = hasBlock.has(key);
+      if (t && bl) m.set(key, "both");
+      else if (t) m.set(key, "turno");
+      else m.set(key, "block");
     }
     return m;
   }, [visibleReservations, agendaBlocks, grid]);
@@ -311,8 +330,11 @@ export function PanelTurnosDashboard() {
     setRefreshTick((t) => t + 1);
   }, []);
 
-  async function handleDeleteBlock(blockId: string) {
-    if (!window.confirm("¿Eliminar este bloqueo de agenda?")) return;
+  async function handleDeleteBlock(blockId: string, options?: { habitualWeekday?: boolean }) {
+    const msg = options?.habitualWeekday
+      ? "¿Habilitar este día de la semana? Se quitará el cierre habitual (todos los lunes o miércoles, según corresponda)."
+      : "¿Eliminar este bloqueo de agenda?";
+    if (!window.confirm(msg)) return;
     const res = await fetch(`/api/panel-turnos/agenda-blocks?id=${encodeURIComponent(blockId)}`, {
       method: "DELETE",
       credentials: "same-origin",
@@ -374,6 +396,7 @@ export function PanelTurnosDashboard() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <PanelPublicBookingMode />
             <Link
               href="/panel-turnos/bloqueo"
               className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-amber-500/35 bg-[#171717] text-amber-200/95 shadow-[0_6px_22px_rgba(0,0,0,0.35)] hover:bg-[#1d1d1d]"
@@ -425,7 +448,7 @@ export function PanelTurnosDashboard() {
           <div className="grid grid-cols-7 gap-y-2 text-center">
             {grid.map((cell) => {
               const sel = cell.dateKey === selectedKey;
-              const count = combinedCountsByDay.get(cell.dateKey) ?? 0;
+              const marker = dayCalendarMarkers.get(cell.dateKey);
               const inMonth = cell.inMonth;
 
               return (
@@ -433,6 +456,15 @@ export function PanelTurnosDashboard() {
                   key={`${cell.dateKey}-${cell.inMonth}-${cell.day}`}
                   type="button"
                   onClick={() => setSelectedKey(cell.dateKey)}
+                  aria-label={
+                    marker === "turno"
+                      ? `${cell.day}, con turnos`
+                      : marker === "block"
+                        ? `${cell.day}, bloqueado`
+                        : marker === "both"
+                          ? `${cell.day}, con turnos y bloqueos`
+                          : String(cell.day)
+                  }
                   className="flex w-full cursor-pointer flex-col items-center py-1"
                 >
                   <span
@@ -446,17 +478,47 @@ export function PanelTurnosDashboard() {
                   >
                     {cell.day}
                   </span>
-                  <span className="mt-0.5 flex h-2 items-center justify-center">
-                    {count > 0 ? (
-                      <span className="block h-1 w-1 rounded-full bg-[var(--premium-gold)]" />
-                    ) : (
-                      <span className="block h-1 w-1 rounded-full bg-transparent" />
-                    )}
+                  <span className="mt-0.5 flex h-2 items-center justify-center gap-1">
+                    {marker === "turno" || marker === "both" ? (
+                      <span className="block h-1 w-1 shrink-0 rounded-full bg-[var(--premium-gold)]" aria-hidden />
+                    ) : null}
+                    {marker === "block" || marker === "both" ? (
+                      <span className="block h-1 w-1 shrink-0 rounded-full bg-sky-400" aria-hidden />
+                    ) : null}
+                    {!marker ? (
+                      <span className="block h-1 w-1 rounded-full bg-transparent" aria-hidden />
+                    ) : null}
                   </span>
                 </button>
               );
             })}
           </div>
+
+          <p className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[10px] font-medium tracking-wide text-[var(--soft-gray)]/50">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="flex h-2 flex-col items-center justify-center gap-0.5" aria-hidden>
+                <span className="block h-1 w-1 rounded-full bg-[var(--premium-gold)]" />
+              </span>
+              Turnos
+            </span>
+            <span className="text-[var(--soft-gray)]/25" aria-hidden>
+              ·
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="block h-1 w-1 rounded-full bg-sky-400" aria-hidden />
+              Bloqueo
+            </span>
+            <span className="text-[var(--soft-gray)]/25" aria-hidden>
+              ·
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="flex items-center gap-1" aria-hidden>
+                <span className="block h-1 w-1 rounded-full bg-[var(--premium-gold)]" />
+                <span className="block h-1 w-1 rounded-full bg-sky-400" />
+              </span>
+              Los dos
+            </span>
+          </p>
         </section>
 
         <div className="mt-5 flex items-start justify-between gap-4">
@@ -504,25 +566,35 @@ export function PanelTurnosDashboard() {
               if (row.kind === "block") {
                 const b = row.item;
                 const weekly = b.recurrence?.type === "weekly";
+                const habitual = isSystemWeekdayClosureBlock(b);
+                const timeRange = formatAgendaBlockTimeRange(b.timeLocal, b.durationMinutes);
+                const fullDaySalon =
+                  habitual && b.scope === "salon" && !b.blockedTreatmentIds?.length;
                 return (
                   <article
                     key={`block-${b.id}`}
                     className="rounded-[20px] border border-amber-500/25 bg-[#171717] px-4 py-4 shadow-[0_10px_32px_rgba(0,0,0,0.32)]"
                   >
                     <div className="flex gap-3">
-                      <div className="w-[52px] shrink-0 text-left">
-                        <p className="text-[15px] font-bold leading-none text-amber-100/95">{b.timeLocal}</p>
-                        <p className="mt-2 text-[11px] leading-none text-[var(--soft-gray)]/48">{b.durationMinutes} min</p>
+                      <div className="w-[min(6.75rem,32%)] shrink-0 text-left">
+                        <p className="text-[13px] font-bold leading-snug text-amber-100/95 sm:text-[15px] sm:leading-none">
+                          {fullDaySalon ? "Todo el día" : timeRange}
+                        </p>
+                        {fullDaySalon ? (
+                          <p className="mt-2 text-[11px] leading-none text-[var(--soft-gray)]/48">{timeRange}</p>
+                        ) : null}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex gap-2">
                           <Lock className="h-5 w-5 shrink-0 text-amber-300/90" strokeWidth={2} />
                           <div className="min-w-0 flex-1">
-                            <p className="text-[15px] font-bold leading-snug text-[var(--soft-gray)]">Bloqueo de agenda</p>
+                            <p className="text-[15px] font-bold leading-snug text-[var(--soft-gray)]">
+                              {habitual ? "Día cerrado" : "Bloqueo de agenda"}
+                            </p>
                             <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">{blockScopeDescription(b)}</p>
                             <div className="mt-2 flex flex-wrap items-center gap-2">
                               <span className="inline-block rounded-full bg-amber-500/18 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-amber-100/95">
-                                Bloqueo
+                                {habitual ? "Cerrado" : "Bloqueo"}
                               </span>
                               {weekly ? (
                                 <span className="inline-block rounded-full bg-white/8 px-2.5 py-1 text-[11px] font-semibold text-[var(--soft-gray)]/78">
@@ -532,10 +604,14 @@ export function PanelTurnosDashboard() {
                               ) : null}
                               <button
                                 type="button"
-                                onClick={() => void handleDeleteBlock(b.id)}
-                                className="cursor-pointer text-[11px] font-semibold text-red-300/90 underline-offset-2 hover:underline"
+                                onClick={() => void handleDeleteBlock(b.id, { habitualWeekday: habitual })}
+                                className={
+                                  habitual
+                                    ? "inline-flex h-8 cursor-pointer items-center rounded-lg border border-emerald-500/40 bg-emerald-500/12 px-3 text-[11px] font-semibold text-emerald-200/95 transition hover:bg-emerald-500/18"
+                                    : "cursor-pointer text-[11px] font-semibold text-red-300/90 underline-offset-2 hover:underline"
+                                }
                               >
-                                Eliminar
+                                {habitual ? "Habilitar día" : "Eliminar"}
                               </button>
                             </div>
                             {b.notes ? (

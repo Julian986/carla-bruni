@@ -44,7 +44,9 @@ function hhmmToMinutes(hhmm: string): number {
 /** Minuto del día en que deben haber terminado los servicios (cierre), por día de semana; null = cerrado. */
 function closingMinutesForWeekday(weekday: number): number | null {
   switch (weekday) {
+    case 1: // lunes (habitualmente bloqueado en agenda; horario base si se desbloquea)
     case 2: // martes
+    case 3: // miércoles (idem lunes)
       return 16 * 60 + 30;
     case 4: // jueves
     case 5: // viernes
@@ -80,6 +82,22 @@ export function getSalonWorkDayBlockRange(dateKey: string): { timeLocal: string;
   return { timeLocal: slots[0], durationMinutes: endMins - startMins };
 }
 
+/**
+ * Igual que `getSalonWorkDayBlockRange` pero usa la grilla semanal fija (no descarta fechas pasadas).
+ * Sirve para sembrar bloqueos recurrentes con anclas en el pasado.
+ */
+export function getSalonScheduleBlockRangeForWeekday(
+  weekday: number,
+): { timeLocal: string; durationMinutes: number } | null {
+  const slots = availableTimesByWeekday[weekday] ?? [];
+  if (slots.length === 0) return null;
+  const endMins = closingMinutesForWeekday(weekday);
+  if (endMins == null) return null;
+  const startMins = hhmmToMinutes(slots[0]);
+  if (endMins <= startMins) return null;
+  return { timeLocal: slots[0], durationMinutes: endMins - startMins };
+}
+
 /** Inicios de turno cada `SLOT_STEP_MINUTES`, con `open` inclusive y `close` exclusive (ej. 9:00–18:00 → último inicio 17:30). */
 function buildStepSlots(openH: number, openM: number, closeH: number, closeM: number): string[] {
   let t = openH * 60 + openM;
@@ -93,14 +111,15 @@ function buildStepSlots(openH: number, openM: number, closeH: number, closeM: nu
 }
 
 /**
- * Horarios base (ART): lun y mié cerrados; mar 8:30–16:30; jue y vie 9–18; sáb 9–15; dom cerrado.
+ * Horarios base (ART): lun y mié 8:30–16:30 (cierre habitual vía bloqueos de agenda semanales);
+ * mar igual; jue y vie 9–18; sáb 9–15; dom cerrado.
  * Grilla cada 30 min (cierre exclusivo en `buildStepSlots`: último inicio media hora antes del cierre).
  */
 const availableTimesByWeekday: Record<number, string[]> = {
   0: [],
-  1: [],
+  1: buildStepSlots(8, 30, 16, 30),
   2: buildStepSlots(8, 30, 16, 30),
-  3: [],
+  3: buildStepSlots(8, 30, 16, 30),
   4: buildStepSlots(9, 0, 18, 0),
   5: buildStepSlots(9, 0, 18, 0),
   6: buildStepSlots(9, 0, 15, 0),
@@ -135,6 +154,16 @@ export function filterSlotsServiceEndsOnOrBeforeClose(
 const availableTimesByDateOverride: Record<string, string[]> = {};
 
 export const salonWeekdayLabels = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+const salonWeekdayLong = [
+  "Domingo",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+] as const;
 
 export const salonMonthNames = [
   "Enero",
@@ -221,6 +250,17 @@ export function formatSalonDisplayDate(value: string) {
 
   const date = new Date(year, month - 1, day);
   return `${salonWeekdayLabels[date.getDay()]}, ${day} ${salonMonthNames[month - 1].slice(0, 3).toLowerCase()}`;
+}
+
+/** Fecha legible para mensajes de consulta por WhatsApp (ej. «Jueves 21 de mayo»). */
+export function formatSalonConsultWhatsAppDate(value: string): string {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return "—";
+
+  const date = new Date(year, month - 1, day);
+  const weekday = salonWeekdayLong[date.getDay()];
+  const monthName = salonMonthNames[month - 1].toLowerCase();
+  return `${weekday} ${day} de ${monthName}`;
 }
 
 /** Solo dígitos, para cruzar reservas con el mismo WhatsApp aunque el formato varíe. */

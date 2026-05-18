@@ -7,9 +7,8 @@ import { findSalonTreatmentById } from "@/lib/treatments/catalog";
 const COLLECTION = "reservations";
 const ACTIVE_STATUSES = ["confirmed"] as const;
 
-/** Inicio/fin (minutos desde medianoche ART) con hasta 3 turnos simultáneos. Inclusive 11:30. */
-const DOUBLE_CAPACITY_START_MIN = 9 * 60;
-const DOUBLE_CAPACITY_END_MIN = 11 * 60 + 30;
+/** Máximo de turnos confirmados que pueden solaparse en el mismo instante (todo el horario). */
+export const SALON_MAX_CONCURRENT_RESERVATIONS = 1;
 
 export type IntervalMs = { startMs: number; endMs: number };
 
@@ -33,15 +32,11 @@ export function slotIntervalMs(
   return { startMs, endMs };
 }
 
-/** Capacidad del salón en ese instante: 3 entre 9:00 y 11:30 (ART, mismo dateKey), 2 fuera. */
+/** Capacidad del salón en ese instante (mismo `dateKey` en ART); fuera del día, 1. */
 export function salonConcurrentCapAtInstant(dateKey: string, instantMs: number): number {
   const dayKey = formatInTimeZone(new Date(instantMs), RESERVATION_TZ, "yyyy-MM-dd");
-  if (dayKey !== dateKey) return 1;
-  const hm = formatInTimeZone(new Date(instantMs), RESERVATION_TZ, "HH:mm");
-  const [h, m] = hm.split(":").map(Number);
-  const mins = h * 60 + m;
-  if (mins >= DOUBLE_CAPACITY_START_MIN && mins <= DOUBLE_CAPACITY_END_MIN) return 3;
-  return 2;
+  if (dayKey !== dateKey) return SALON_MAX_CONCURRENT_RESERVATIONS;
+  return SALON_MAX_CONCURRENT_RESERVATIONS;
 }
 
 export function reservationDurationMinutesFromDoc(r: {
@@ -88,17 +83,10 @@ export async function loadBusyIntervalsMs(
   });
 }
 
-function capacityBoundaryInstantsMs(dateKey: string): number[] {
-  return [
-    new Date(`${dateKey}T09:00:00-03:00`).getTime(),
-    new Date(`${dateKey}T11:31:00-03:00`).getTime(),
-  ];
-}
-
 /**
- * ¿Se puede agregar este intervalo sin superar la capacidad por franja?
- * Entre 9:00 y 11:30 ART pueden convivir hasta 3 turnos que se solapen; fuera, 2.
- * `getEffectiveCap` permite reducir cupos por bloqueos de agenda (silla / salón).
+ * ¿Se puede agregar este intervalo sin superar la capacidad del salón?
+ * Con cupo 1: ningún turno puede solaparse con otro confirmado.
+ * `getEffectiveCap` permite reducir a 0 por bloqueos de agenda (silla / salón).
  */
 export function canPlaceReservationSlot(
   dateKey: string,
@@ -116,12 +104,6 @@ export function canPlaceReservationSlot(
       points.add(e);
     }
   }
-  for (const bt of capacityBoundaryInstantsMs(dateKey)) {
-    if (bt > candidate.startMs && bt < candidate.endMs) {
-      points.add(bt);
-    }
-  }
-
   const sorted = [...points].sort((a, b) => a - b);
   for (let i = 0; i < sorted.length - 1; i++) {
     const t0 = sorted[i];

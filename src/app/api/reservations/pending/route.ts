@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  PUBLIC_BOOKING_DISABLED_MESSAGE,
+  isPublicOnlineBookingEnabled,
+} from "@/lib/booking/public-booking-config";
 import { getDb } from "@/lib/mongodb";
 import { parseCreateReservationBody } from "@/lib/reservations/parse-body";
 import { treatmentRequiresPublicDeposit } from "@/lib/reservations/public-deposit";
@@ -11,6 +15,13 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  if (!(await isPublicOnlineBookingEnabled())) {
+    return NextResponse.json(
+      { error: PUBLIC_BOOKING_DISABLED_MESSAGE, code: "PUBLIC_BOOKING_DISABLED" },
+      { status: 403 },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

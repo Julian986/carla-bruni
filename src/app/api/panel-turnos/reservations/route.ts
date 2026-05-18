@@ -53,6 +53,7 @@ function serializeAgendaBlock(b: SalonAgendaBlockDoc) {
     scope: b.scope,
     blockedTreatmentIds: b.blockedTreatmentIds?.length ? b.blockedTreatmentIds : null,
     recurrence: b.recurrence ?? null,
+    createdBy: b.createdBy ?? null,
     notes: b.notes ?? null,
   };
 }

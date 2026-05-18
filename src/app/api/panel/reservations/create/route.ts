@@ -24,7 +24,9 @@ export async function POST(request: Request) {
   }
 
   const b = body as Record<string, unknown>;
-  const treatmentId = typeof b.treatmentId === "string" ? b.treatmentId : "";
+  const treatmentId = typeof b.treatmentId === "string" ? b.treatmentId.trim() : "";
+  const serviceIdsRaw = Array.isArray(b.serviceIds) ? b.serviceIds : [];
+  const serviceIds = serviceIdsRaw.map((v) => String(v ?? "").trim()).filter(Boolean);
   const dateKey = typeof b.dateKey === "string" ? b.dateKey : "";
   const timeLocal = typeof b.timeLocal === "string" ? b.timeLocal : "";
   const customerName = typeof b.customerName === "string" ? b.customerName : "";
@@ -32,8 +34,11 @@ export async function POST(request: Request) {
   const whatsappOptIn = b.whatsappOptIn === true;
   const panelNotes = b.panelNotes == null ? null : typeof b.panelNotes === "string" ? b.panelNotes : undefined;
 
-  if (!treatmentId.trim()) {
+  if (!treatmentId && serviceIds.length === 0) {
     return NextResponse.json({ error: "Falta el tratamiento." }, { status: 400 });
+  }
+  if (serviceIds.length > 4) {
+    return NextResponse.json({ error: "Podés combinar hasta 4 tratamientos por turno." }, { status: 400 });
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey.trim())) {
     return NextResponse.json({ error: "Fecha inválida." }, { status: 400 });
@@ -54,7 +59,8 @@ export async function POST(request: Request) {
   try {
     const db = await getDb();
     const result = await insertPanelReservation(db, {
-      treatmentId,
+      treatmentId: serviceIds[0] ?? treatmentId,
+      serviceIds: serviceIds.length > 0 ? serviceIds : undefined,
       dateKey,
       timeLocal,
       customerName,

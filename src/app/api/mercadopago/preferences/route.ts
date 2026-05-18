@@ -1,5 +1,9 @@
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";
+import {
+  PUBLIC_BOOKING_DISABLED_MESSAGE,
+  isPublicOnlineBookingEnabled,
+} from "@/lib/booking/public-booking-config";
 import { getDb } from "@/lib/mongodb";
 import { createCheckoutProPreference } from "@/lib/mercadopago/create-preference";
 import { attachPreferenceToReservation, findReservationByHexId } from "@/lib/reservations/service";
@@ -9,6 +13,13 @@ export const dynamic = "force-dynamic";
 type Body = { reservationId?: string; checkoutToken?: string };
 
 export async function POST(request: Request) {
+  if (!(await isPublicOnlineBookingEnabled())) {
+    return NextResponse.json(
+      { error: PUBLIC_BOOKING_DISABLED_MESSAGE, code: "PUBLIC_BOOKING_DISABLED" },
+      { status: 403 },
+    );
+  }
+
   let body: Body;
   try {
     body = (await request.json()) as Body;

@@ -11,12 +11,15 @@ import {
   formatSalonDisplayDate,
   isLikelyWhatsappNumber,
 } from "@/lib/booking/salon-availability";
+import { findSalonTreatmentById } from "@/lib/treatments/catalog";
 
 export function PanelNuevoTurnoClient() {
   const router = useRouter();
   const [selectedTreatmentId, setSelectedTreatmentId] = useState("");
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [serviceLimitHint, setServiceLimitHint] = useState<string | null>(null);
   const [treatmentFirstHintVisible, setTreatmentFirstHintVisible] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -26,13 +29,40 @@ export function PanelNuevoTurnoClient() {
   const [error, setError] = useState<string | null>(null);
   const [remoteSlots, setRemoteSlots] = useState<string[] | null | undefined>(undefined);
   const bookingFocusRef = useRef<HTMLDivElement | null>(null);
+  const dataSectionRef = useRef<HTMLElement | null>(null);
 
-  const selectedTreatment = useMemo(
-    () => SALON_TREATMENT_OPTIONS.find((option) => option.id === selectedTreatmentId),
-    [selectedTreatmentId],
+  const selectedServices = useMemo(
+    () =>
+      selectedServiceIds.flatMap((id) => {
+        const found = SALON_TREATMENT_OPTIONS.find((o) => o.id === id);
+        return found ? [found] : [];
+      }),
+    [selectedServiceIds],
   );
+  const selectedServicesSummary = useMemo(
+    () => selectedServices.map((s) => s.name).join(" + "),
+    [selectedServices],
+  );
+  const totalSelectedDurationMinutes = useMemo(
+    () =>
+      selectedServiceIds.reduce((acc, id) => {
+        const t = findSalonTreatmentById(id);
+        return acc + (t?.durationMinutes ?? 0);
+      }, 0),
+    [selectedServiceIds],
+  );
+  const totalSelectedDurationLabel = useMemo(() => {
+    const total = totalSelectedDurationMinutes;
+    if (total <= 0) return "";
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h > 0 && m > 0) return `Duración ${h} h ${m} min`;
+    if (h > 0) return `Duración ${h} h`;
+    return `Duración ${m} min`;
+  }, [totalSelectedDurationMinutes]);
+  const primaryService = selectedServices[0];
 
-  const hasSlot = Boolean(selectedTreatment && selectedDate && selectedTime);
+  const hasSlot = Boolean(selectedServices.length > 0 && selectedDate && selectedTime);
   const datosComplete = Boolean(
     customerName.trim().length >= 2 &&
       isLikelyWhatsappNumber(customerPhone) &&
@@ -42,7 +72,17 @@ export function PanelNuevoTurnoClient() {
     customerPhone.trim().length >= 8 && !isLikelyWhatsappNumber(customerPhone);
 
   useEffect(() => {
-    if (!selectedDate || !selectedTreatmentId) {
+    if (selectedServices.length > 0) setTreatmentFirstHintVisible(false);
+  }, [selectedServices.length]);
+
+  useEffect(() => {
+    if (!treatmentFirstHintVisible) return;
+    const t = window.setTimeout(() => setTreatmentFirstHintVisible(false), 4500);
+    return () => window.clearTimeout(t);
+  }, [treatmentFirstHintVisible]);
+
+  useEffect(() => {
+    if (!selectedDate || selectedServiceIds.length === 0) {
       setRemoteSlots(undefined);
       return;
     }
@@ -50,7 +90,8 @@ export function PanelNuevoTurnoClient() {
     setRemoteSlots(null);
     const q = new URLSearchParams({
       dateKey: selectedDate,
-      treatmentId: selectedTreatmentId,
+      treatmentId: selectedServiceIds[0] ?? "",
+      serviceIds: selectedServiceIds.join(","),
       scope: "panel",
     });
     fetch(`/api/booking/slots?${q.toString()}`, { credentials: "same-origin" })
@@ -66,18 +107,34 @@ export function PanelNuevoTurnoClient() {
     return () => {
       cancelled = true;
     };
-  }, [selectedDate, selectedTreatmentId]);
+  }, [selectedDate, selectedServiceIds]);
 
   useEffect(() => {
-    if (!selectedDate || !selectedTime || !selectedTreatmentId) return;
+    if (!selectedDate || !selectedTime || selectedServiceIds.length === 0) return;
     if (remoteSlots === undefined || remoteSlots === null) return;
     if (!remoteSlots.includes(selectedTime)) {
       setSelectedTime("");
     }
-  }, [selectedDate, selectedTime, selectedTreatmentId, remoteSlots]);
+  }, [selectedDate, selectedTime, selectedServiceIds, remoteSlots]);
+
+  useEffect(() => {
+    if (!serviceLimitHint) return;
+    const t = window.setTimeout(() => setServiceLimitHint(null), 3200);
+    return () => window.clearTimeout(t);
+  }, [serviceLimitHint]);
+
+  useEffect(() => {
+    if (!hasSlot || !selectedTime) return;
+    const id = requestAnimationFrame(() => {
+      dataSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [hasSlot, selectedTime]);
 
   async function handleSubmit() {
-    if (!selectedTreatment || !selectedDate || !selectedTime || !datosComplete) return;
+    if (!primaryService || selectedServices.length === 0 || !selectedDate || !selectedTime || !datosComplete) {
+      return;
+    }
     setError(null);
     setSubmitting(true);
     try {
@@ -85,7 +142,8 @@ export function PanelNuevoTurnoClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          treatmentId: selectedTreatment.id,
+          treatmentId: primaryService.id,
+          serviceIds: selectedServices.map((s) => s.id),
           dateKey: selectedDate,
           timeLocal: selectedTime,
           customerName: customerName.trim(),
@@ -136,20 +194,55 @@ export function PanelNuevoTurnoClient() {
           selectedTime={selectedTime}
           onTimeChange={setSelectedTime}
           remoteTimeSlots={
-            selectedDate && selectedTreatmentId ? (remoteSlots ?? null) : undefined
+            selectedDate && selectedServiceIds.length > 0 ? (remoteSlots ?? null) : undefined
           }
           bookingFocusRef={bookingFocusRef}
           treatmentFirstHintVisible={treatmentFirstHintVisible}
           onTreatmentFirstHintVisible={setTreatmentFirstHintVisible}
+          selectedCountLabel={
+            selectedServices.length > 0
+              ? `${selectedServices.length} servicio${selectedServices.length === 1 ? "" : "s"} seleccionado${
+                  selectedServices.length === 1 ? "" : "s"
+                }`
+              : undefined
+          }
+          selectedDurationLabel={selectedServices.length > 0 ? totalSelectedDurationLabel : undefined}
+          summaryTitle={selectedServices.length > 0 ? selectedServicesSummary : undefined}
+          monthAvailabilityServiceIds={selectedServiceIds}
+          multiSelect
+          selectedTreatmentIds={selectedServiceIds}
+          onToggleTreatmentId={(id) => {
+            setSelectedServiceIds((prev) => {
+              if (prev.includes(id)) return prev.filter((x) => x !== id);
+              if (prev.length >= 4) {
+                setServiceLimitHint("Máximo 4 tratamientos por turno.");
+                return prev;
+              }
+              return [...prev, id];
+            });
+            setSelectedTime("");
+          }}
+          onClearTreatmentIds={() => {
+            setSelectedServiceIds([]);
+            setSelectedTreatmentId("");
+            setSelectedTime("");
+          }}
+          comboHintText="Podés elegir hasta 4 tratamientos en un mismo turno (según disponibilidad de agenda)."
+          comboDurationLabel={totalSelectedDurationLabel}
+          comboAlertText={serviceLimitHint}
         />
 
         {hasSlot && (
-          <section className="mt-6 space-y-4 rounded-2xl border border-white/8 bg-[#171717] px-4 py-4">
+          <section
+            ref={dataSectionRef}
+            className="mt-6 scroll-mt-6 space-y-4 rounded-2xl border border-white/8 bg-[#171717] px-4 py-4"
+          >
             <div>
               <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">Datos del cliente</p>
               <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">
                 Turno el {formatSalonDisplayDate(selectedDate)} a las {selectedTime}
               </p>
+              <p className="mt-1 text-[12px] text-[var(--premium-gold)]/90">{selectedServicesSummary}</p>
             </div>
             <div className="space-y-3">
               <div>

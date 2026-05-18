@@ -1,6 +1,14 @@
 ﻿"use client";
 
-import { CalendarDays, ChevronLeft, Home as HomeIcon, Percent, Sparkles, User } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronLeft,
+  Home as HomeIcon,
+  MessageCircle,
+  Percent,
+  Sparkles,
+  User,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -11,11 +19,14 @@ import {
   formatSalonDisplayDate,
   isLikelyWhatsappNumber,
 } from "@/lib/booking/salon-availability";
+import { buildPublicBookingConsultWhatsAppUrl } from "@/lib/booking/public-booking-consult";
 import { treatmentRequiresPublicDeposit } from "@/lib/reservations/public-deposit";
 import { findSalonTreatmentById } from "@/lib/treatments/catalog";
 
 type TurnosClientProps = {
   initialTreatment?: string;
+  /** `false` → agenda real + consulta por WhatsApp (sin MP). */
+  publicOnlineBookingEnabled?: boolean;
 };
 
 type MeReservationsResponse = {
@@ -27,7 +38,10 @@ type MeReservationsResponse = {
 };
 const CUSTOMER_PROFILE_CACHE_KEY = "mp_customer_profile_cache";
 
-export default function TurnosClient({ initialTreatment = "" }: TurnosClientProps) {
+export default function TurnosClient({
+  initialTreatment = "",
+  publicOnlineBookingEnabled = true,
+}: TurnosClientProps) {
   const treatmentParam = (() => {
     try {
       return decodeURIComponent(initialTreatment.trim());
@@ -99,6 +113,15 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
   const requiresDeposit = selectedServices.some((s) => treatmentRequiresPublicDeposit(s.id));
 
   const hasSlot = Boolean(selectedServices.length > 0 && selectedDate && selectedTime);
+
+  const consultWhatsAppUrl = useMemo(() => {
+    if (!hasSlot) return null;
+    return buildPublicBookingConsultWhatsAppUrl({
+      serviceLabel: selectedServicesSummary,
+      dateKey: selectedDate,
+      timeLocal: selectedTime,
+    });
+  }, [hasSlot, selectedServicesSummary, selectedDate, selectedTime]);
   const datosComplete = Boolean(
     customerName.trim().length >= 2 &&
       isLikelyWhatsappNumber(customerPhone) &&
@@ -113,9 +136,11 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
       ? 2
       : !selectedTime
         ? 3
-        : !datosComplete
-          ? 4
-          : 5;
+        : !publicOnlineBookingEnabled
+          ? 5
+          : !datosComplete
+            ? 4
+            : 5;
 
   useEffect(() => {
     try {
@@ -291,10 +316,23 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
   useEffect(() => {
     if (!hasSlot) return;
     const id = requestAnimationFrame(() => {
-      dataSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (publicOnlineBookingEnabled) {
+        dataSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        paymentSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
     });
     return () => cancelAnimationFrame(id);
-  }, [hasSlot, selectedTime]);
+  }, [hasSlot, selectedTime, publicOnlineBookingEnabled]);
+
+  const trackConsultWhatsApp = () => {
+    gaEvent("booking_consult_whatsapp", {
+      treatment_id: primaryService?.id ?? "",
+      treatment_name: selectedServicesSummary,
+      date_key: selectedDate,
+      time_local: selectedTime,
+    });
+  };
 
   const handleMercadoPagoCheckout = async () => {
     if (!primaryService || selectedServices.length === 0 || !selectedDate || !selectedTime || !datosComplete) {
@@ -419,6 +457,15 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
           </p>
         ) : null}
 
+        {/* Aviso reserva pausada — oculto por ahora
+        {!publicOnlineBookingEnabled ? (
+          <p className="mb-4 rounded-xl border border-[var(--premium-gold)]/25 bg-[var(--premium-gold)]/8 px-3 py-2.5 text-center text-[12px] leading-snug text-[var(--soft-gray)]/88">
+            La reserva online está pausada. Elegí servicio, día y hora en la agenda (los ocupados no aparecen) y
+            consultá por WhatsApp.
+          </p>
+        ) : null}
+        */}
+
         <BookingPicker
           selectedTreatmentId={selectedTreatmentId}
           onTreatmentIdChange={(id) => {
@@ -470,7 +517,7 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
 
         {hasSlot && (
           <div ref={dataSectionRef} className="mt-6 space-y-5">
-            {!hasSessionProfile ? (
+            {publicOnlineBookingEnabled && !hasSessionProfile ? (
               <section
                 className={`rounded-2xl border bg-[#171717] px-4 py-4 transition-all ${
                   activeStep === 4
@@ -556,11 +603,11 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
                   </label>
                 </div>
               </section>
-            ) : (
+            ) : publicOnlineBookingEnabled ? (
               <section className="rounded-2xl border border-emerald-500/25 bg-emerald-950/15 px-4 py-3 text-[13px] text-emerald-100/90">
                 Usaremos tus datos guardados para confirmar el turno.
               </section>
-            )}
+            ) : null}
 
             <section
               ref={paymentSectionRef}
@@ -570,7 +617,11 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
                   : "border-white/8"
               }`}
             >
-              <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">Paso 5</p>
+              <p className="text-[11px] tracking-[0.14em] text-[var(--soft-gray)]/55">
+                Paso {publicOnlineBookingEnabled ? 5 : 4}
+              </p>
+              {publicOnlineBookingEnabled ? (
+              <>
               <p className="mt-1 text-[18px] font-heading text-[var(--soft-gray)]">
                 {requiresDeposit ? "Seña con Mercado Pago" : "Confirmar turno"}
               </p>
@@ -631,6 +682,40 @@ export default function TurnosClient({ initialTreatment = "" }: TurnosClientProp
                   </span>
                 </button>
               </div>
+              </>
+              ) : (
+                <>
+                  <p className="mt-1 text-[18px] font-heading text-[var(--soft-gray)]">Consultar por WhatsApp</p>
+                  <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">
+                    Te abrimos un chat con el servicio, día y hora que elegiste. Carla confirma disponibilidad y
+                    coordina el turno.
+                  </p>
+                  <p className="mt-3 rounded-xl border border-white/8 bg-black/25 px-3 py-2.5 text-[12px] leading-relaxed text-[var(--soft-gray)]/82">
+                    <span className="block text-[var(--premium-gold)]/90">{selectedServicesSummary}</span>
+                    <span className="mt-1 block">
+                      {formatSalonDisplayDate(selectedDate)} · {selectedTime}
+                    </span>
+                  </p>
+                  <div className="mt-4">
+                    <a
+                      href={consultWhatsAppUrl ?? "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => {
+                        if (!consultWhatsAppUrl) {
+                          e.preventDefault();
+                          return;
+                        }
+                        trackConsultWhatsApp();
+                      }}
+                      className="flex h-[52px] w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl bg-[#25D366] text-[16px] font-semibold text-white no-underline shadow-[0_8px_24px_rgba(37,211,102,0.28)] transition-all hover:bg-[#20bd5a]"
+                    >
+                      <MessageCircle className="h-5 w-5 shrink-0" strokeWidth={2} aria-hidden />
+                      <span>Consultar por WhatsApp</span>
+                    </a>
+                  </div>
+                </>
+              )}
               {confirmError ? (
                 <p
                   role="alert"
