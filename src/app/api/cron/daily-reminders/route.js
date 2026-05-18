@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { getDb } from "@/lib/mongodb";
 import { getTwilioClient } from "@/lib/twilio";
+import { insertWhatsappOutboundLog } from "@/lib/whatsapp/whatsapp-logs";
 
 const TZ = "America/Argentina/Buenos_Aires";
 
@@ -102,14 +103,13 @@ export async function GET(request) {
           contentVariables: JSON.stringify({ "1": nombre, "2": servicio, "3": fecha, "4": hora }),
         });
 
-        await logsCol.insertOne({
+        await insertWhatsappOutboundLog(db, {
+          reservationId: reservation._id.toHexString(),
           to: reservation.customerPhone,
-          message: "",
           sid: twilioResponse.sid,
           status: twilioResponse.status,
           template: process.env.TWILIO_REMINDER_CONTENT_SID ?? null,
           templateVariables: { nombre, servicio, fecha, hora },
-          createdAt: new Date(),
         });
 
         sent += 1;

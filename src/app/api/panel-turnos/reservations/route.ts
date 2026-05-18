@@ -41,6 +41,12 @@ function serialize(r: ReservationDoc) {
           : null,
     startsAt: r.startsAt instanceof Date ? r.startsAt.toISOString() : String(r.startsAt),
     createdAt: r.createdAt instanceof Date ? r.createdAt.toISOString() : String(r.createdAt),
+    waAttendanceConfirmedAt:
+      r.waAttendanceConfirmedAt instanceof Date
+        ? r.waAttendanceConfirmedAt.toISOString()
+        : r.waAttendanceConfirmedAt
+          ? String(r.waAttendanceConfirmedAt)
+          : null,
   };
 }
 

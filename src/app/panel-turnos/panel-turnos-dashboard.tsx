@@ -50,10 +50,11 @@ export type PanelReservation = {
   reservationStatus: string;
   paymentStatus: string;
   /** Quién canceló (solo si `reservationStatus` es cancelled). */
-  cancelledBy?: "panel" | "customer" | null;
+  cancelledBy?: "panel" | "customer" | "whatsapp" | null;
   source?: string;
   startsAt: string;
   createdAt: string;
+  waAttendanceConfirmedAt?: string | null;
 };
 
 export type PanelAgendaBlock = {
@@ -158,7 +159,7 @@ function StatusBadge({
 }: {
   reservationStatus: string;
   paymentStatus: string;
-  cancelledBy?: "panel" | "customer" | null;
+  cancelledBy?: "panel" | "customer" | "whatsapp" | null;
 }) {
   if (reservationStatus === "cancelled") {
     const detail =
@@ -166,7 +167,9 @@ function StatusBadge({
         ? "Desde el panel"
         : cancelledBy === "customer"
           ? "Desde la web (cliente)"
-          : null;
+          : cancelledBy === "whatsapp"
+            ? "Por WhatsApp"
+            : null;
     return (
       <span className="inline-flex max-w-full flex-col gap-0.5">
         <span className="inline-block w-fit rounded-full bg-red-500/12 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-red-300/95">
@@ -732,6 +735,12 @@ export function PanelTurnosDashboard() {
                               paymentStatus={r.paymentStatus}
                               cancelledBy={r.cancelledBy ?? null}
                             />
+                            {r.waAttendanceConfirmedAt &&
+                            (r.reservationStatus === "confirmed" || r.reservationStatus === "pending_payment") ? (
+                              <span className="inline-block rounded-full bg-teal-500/16 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-teal-200/95">
+                                Confirmó asistencia
+                              </span>
+                            ) : null}
                             {r.source === "panel" ? (
                               <span className="inline-block rounded-full bg-sky-500/14 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-sky-200/95">
                                 Manual
