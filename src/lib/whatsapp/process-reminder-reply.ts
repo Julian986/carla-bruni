@@ -107,7 +107,7 @@ export async function processWaReminderInboundReply(
       ok: true,
       action: input.action,
       reservationId,
-      replyText: `Listo, cancelamos tu turno del ${display} a las ${time}. Si querés reagendar, escribinos por acá.`,
+      replyText: `Listo, cancelamos tu turno del ${display} a las ${time}. Para reservar otro día entrá a freyjabycarlabruni.com/turnos`,
     };
   }
 

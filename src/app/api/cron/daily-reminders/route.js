@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 
 import { getDb } from "@/lib/mongodb";
 import { getTwilioClient } from "@/lib/twilio";
+import { buildReminderContentVariables } from "@/lib/whatsapp/reminder-content-variables";
 import { insertWhatsappOutboundLog } from "@/lib/whatsapp/whatsapp-logs";
 
 const TZ = "America/Argentina/Buenos_Aires";
@@ -94,13 +95,21 @@ export async function GET(request) {
         const nombre = reservation.customerName ?? "";
         const servicio = reservation.treatmentName ?? "";
         const fecha = formatInTimeZone(reservation.startsAt, TZ, "dd/MM/yyyy");
-        const hora = formatInTimeZone(reservation.startsAt, TZ, "HH:mm");
+        const hora =
+          (typeof reservation.timeLocal === "string" && reservation.timeLocal.trim()) ||
+          formatInTimeZone(reservation.startsAt, TZ, "HH:mm");
+        const { contentVariablesJson, templateVariables } = buildReminderContentVariables({
+          nombre,
+          servicio,
+          fecha,
+          hora,
+        });
 
         const twilioResponse = await client.messages.create({
           from: process.env.TWILIO_WHATSAPP_FROM,
           to: normalizeTo(reservation.customerPhone),
           contentSid: process.env.TWILIO_REMINDER_CONTENT_SID,
-          contentVariables: JSON.stringify({ "1": nombre, "2": servicio, "3": fecha, "4": hora }),
+          contentVariables: contentVariablesJson,
         });
 
         await insertWhatsappOutboundLog(db, {
@@ -109,7 +118,7 @@ export async function GET(request) {
           sid: twilioResponse.sid,
           status: twilioResponse.status,
           template: process.env.TWILIO_REMINDER_CONTENT_SID ?? null,
-          templateVariables: { nombre, servicio, fecha, hora },
+          templateVariables,
         });
 
         sent += 1;

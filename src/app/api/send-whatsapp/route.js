@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getDb } from "@/lib/mongodb";
 import { getTwilioClient } from "@/lib/twilio";
+import { buildReminderContentVariables } from "@/lib/whatsapp/reminder-content-variables";
 
 function normalizeTo(to) {
   // normaliza a +549 para celulares argentinos
@@ -67,17 +68,19 @@ export async function POST(request) {
     if (!from) throw new Error("Falta variable de entorno: TWILIO_WHATSAPP_FROM");
     if (!contentSid) throw new Error("Falta variable de entorno: TWILIO_REMINDER_CONTENT_SID");
 
+    const { contentVariablesJson, templateVariables } = buildReminderContentVariables({
+      nombre,
+      servicio,
+      fecha,
+      hora,
+    });
+
     const client = getTwilioClient();
     const response = await client.messages.create({
       from,
       to: normalizeTo(to),
       contentSid,
-      contentVariables: JSON.stringify({
-        "1": nombre,
-        "2": servicio,
-        "3": fecha,
-        "4": hora,
-      }),
+      contentVariables: contentVariablesJson,
     });
 
     const db = await getDb();
@@ -86,7 +89,7 @@ export async function POST(request) {
       sid: response.sid,
       status: response.status,
       template: contentSid,
-      templateVariables: { nombre, servicio, fecha, hora },
+      templateVariables,
       createdAt: new Date(),
     });
 
