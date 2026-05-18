@@ -22,7 +22,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   agendaBlockAppliesToDateKey,
+  agendaBlockGroupedRecurrenceLabel,
   formatAgendaBlockTimeRange,
+  groupAgendaBlocksForDayDisplay,
 } from "@/lib/booking/agenda-blocks-shared";
 import { isSystemWeekdayClosureBlock } from "@/lib/booking/weekday-closure-blocks-shared";
 import {
@@ -66,7 +68,9 @@ export type PanelAgendaBlock = {
   createdBy?: string | null;
 };
 
-type DayRow = { kind: "reservation"; item: PanelReservation } | { kind: "block"; item: PanelAgendaBlock };
+type DayRow =
+  | { kind: "reservation"; item: PanelReservation }
+  | { kind: "block"; item: PanelAgendaBlock; blockGroupMembers: PanelAgendaBlock[] };
 
 type DayCalendarMarker = "turno" | "block" | "both";
 
@@ -195,15 +199,47 @@ function scopeLabel(scope: string) {
   return scope;
 }
 
-function blockScopeDescription(b: PanelAgendaBlock): string {
+type BlockScopeDisplay =
+  | { kind: "treatments"; names: string[]; extraCount: number }
+  | { kind: "salon" | "chair"; headline: string };
+
+function getBlockScopeDisplay(b: PanelAgendaBlock): BlockScopeDisplay {
   const ids = b.blockedTreatmentIds?.filter(Boolean) ?? [];
-  if (ids.length === 0) return scopeLabel(b.scope);
-  const names = ids
-    .map((id) => findSalonTreatmentById(id)?.name ?? id)
-    .slice(0, 4)
-    .join(", ");
-  const more = ids.length > 4 ? ` +${ids.length - 4}` : "";
-  return `Solo: ${names}${more}`;
+  if (ids.length > 0) {
+    const names = ids.map((id) => findSalonTreatmentById(id)?.name ?? id);
+    return { kind: "treatments", names: names.slice(0, 4), extraCount: Math.max(0, names.length - 4) };
+  }
+  return {
+    kind: b.scope === "salon" ? "salon" : "chair",
+    headline: scopeLabel(b.scope),
+  };
+}
+
+function BlockScopeHighlight({ scope }: { scope: BlockScopeDisplay }) {
+  if (scope.kind === "treatments") {
+    return (
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {scope.names.map((name) => (
+          <span
+            key={name}
+            className="inline-block max-w-full rounded-xl border border-amber-400/40 bg-gradient-to-br from-amber-500/22 to-orange-600/12 px-2.5 py-1.5 text-[13px] font-semibold leading-snug text-amber-50"
+          >
+            {name}
+          </span>
+        ))}
+        {scope.extraCount > 0 ? (
+          <span className="inline-flex items-center rounded-xl border border-white/12 bg-white/6 px-2.5 py-1.5 text-[12px] font-medium text-[var(--soft-gray)]/70">
+            +{scope.extraCount}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <p className="mt-2 text-[16px] font-semibold leading-snug tracking-tight text-amber-50/98">
+      {scope.headline}
+    </p>
+  );
 }
 
 export function PanelTurnosDashboard() {
@@ -313,10 +349,13 @@ export function PanelTurnosDashboard() {
     for (const r of visibleReservations) {
       if (r.dateKey === selectedKey) rows.push({ kind: "reservation", item: r });
     }
-    for (const b of agendaBlocks) {
-      if (agendaBlockAppliesToDateKey(b, selectedKey)) {
-        rows.push({ kind: "block", item: b });
-      }
+    const blocksForDay = agendaBlocks.filter((b) => agendaBlockAppliesToDateKey(b, selectedKey));
+    for (const group of groupAgendaBlocksForDayDisplay(blocksForDay)) {
+      rows.push({
+        kind: "block",
+        item: group.representative,
+        blockGroupMembers: group.members,
+      });
     }
     rows.sort((a, b) => {
       const ta = a.item.timeLocal;
@@ -330,16 +369,27 @@ export function PanelTurnosDashboard() {
     setRefreshTick((t) => t + 1);
   }, []);
 
-  async function handleDeleteBlock(blockId: string, options?: { habitualWeekday?: boolean }) {
-    const msg = options?.habitualWeekday
-      ? "¿Habilitar este día de la semana? Se quitará el cierre habitual (todos los lunes o miércoles, según corresponda)."
-      : "¿Eliminar este bloqueo de agenda?";
+  async function handleDeleteBlockGroup(
+    members: PanelAgendaBlock[],
+    options?: { habitualWeekday?: boolean },
+  ) {
+    const count = members.length;
+    const msg =
+      count > 1
+        ? options?.habitualWeekday
+          ? `Hay ${count} cierres habituales repetidos. ¿Quitarlos todos y habilitar este día de la semana?`
+          : `Hay ${count} bloqueos iguales este día. ¿Eliminarlos todos?`
+        : options?.habitualWeekday
+          ? "¿Habilitar este día de la semana? Se quitará el cierre habitual (todos los lunes o miércoles, según corresponda)."
+          : "¿Eliminar este bloqueo de agenda?";
     if (!window.confirm(msg)) return;
-    const res = await fetch(`/api/panel-turnos/agenda-blocks?id=${encodeURIComponent(blockId)}`, {
-      method: "DELETE",
-      credentials: "same-origin",
-    });
-    if (!res.ok) return;
+    for (const m of members) {
+      const res = await fetch(`/api/panel-turnos/agenda-blocks?id=${encodeURIComponent(m.id)}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      if (!res.ok) return;
+    }
     reloadMonth();
   }
 
@@ -565,14 +615,18 @@ export function PanelTurnosDashboard() {
             dayRows.map((row) => {
               if (row.kind === "block") {
                 const b = row.item;
-                const weekly = b.recurrence?.type === "weekly";
+                const groupMembers = row.blockGroupMembers;
+                const duplicateCount = groupMembers.length;
+                const recurrenceLabel = agendaBlockGroupedRecurrenceLabel(groupMembers);
                 const habitual = isSystemWeekdayClosureBlock(b);
+                const scopeDisplay = getBlockScopeDisplay(b);
                 const timeRange = formatAgendaBlockTimeRange(b.timeLocal, b.durationMinutes);
                 const fullDaySalon =
                   habitual && b.scope === "salon" && !b.blockedTreatmentIds?.length;
+                const blockTypeLabel = habitual ? "Día cerrado" : "Bloqueo de agenda";
                 return (
                   <article
-                    key={`block-${b.id}`}
+                    key={`block-${b.id}-${duplicateCount}`}
                     className="rounded-[20px] border border-amber-500/25 bg-[#171717] px-4 py-4 shadow-[0_10px_32px_rgba(0,0,0,0.32)]"
                   >
                     <div className="flex gap-3">
@@ -588,30 +642,40 @@ export function PanelTurnosDashboard() {
                         <div className="flex gap-2">
                           <Lock className="h-5 w-5 shrink-0 text-amber-300/90" strokeWidth={2} />
                           <div className="min-w-0 flex-1">
-                            <p className="text-[15px] font-bold leading-snug text-[var(--soft-gray)]">
-                              {habitual ? "Día cerrado" : "Bloqueo de agenda"}
+                            <p className="text-[11px] font-medium tracking-[0.1em] text-[var(--soft-gray)]/52 uppercase">
+                              {blockTypeLabel}
                             </p>
-                            <p className="mt-1 text-[12px] text-[var(--soft-gray)]/58">{blockScopeDescription(b)}</p>
-                            <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <BlockScopeHighlight scope={scopeDisplay} />
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
                               <span className="inline-block rounded-full bg-amber-500/18 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-amber-100/95">
                                 {habitual ? "Cerrado" : "Bloqueo"}
                               </span>
-                              {weekly ? (
+                              {duplicateCount > 1 ? (
+                                <span className="inline-block rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-[var(--soft-gray)]/82">
+                                  ×{duplicateCount}
+                                </span>
+                              ) : null}
+                              {recurrenceLabel ? (
                                 <span className="inline-block rounded-full bg-white/8 px-2.5 py-1 text-[11px] font-semibold text-[var(--soft-gray)]/78">
-                                  Semanal
-                                  {b.recurrence?.untilDateKey ? ` hasta ${b.recurrence.untilDateKey}` : ""}
+                                  {recurrenceLabel}
                                 </span>
                               ) : null}
                               <button
                                 type="button"
-                                onClick={() => void handleDeleteBlock(b.id, { habitualWeekday: habitual })}
+                                onClick={() =>
+                                  void handleDeleteBlockGroup(groupMembers, { habitualWeekday: habitual })
+                                }
                                 className={
                                   habitual
                                     ? "inline-flex h-8 cursor-pointer items-center rounded-lg border border-emerald-500/40 bg-emerald-500/12 px-3 text-[11px] font-semibold text-emerald-200/95 transition hover:bg-emerald-500/18"
                                     : "cursor-pointer text-[11px] font-semibold text-red-300/90 underline-offset-2 hover:underline"
                                 }
                               >
-                                {habitual ? "Habilitar día" : "Eliminar"}
+                                {habitual
+                                  ? "Habilitar día"
+                                  : duplicateCount > 1
+                                    ? `Eliminar (${duplicateCount})`
+                                    : "Eliminar"}
                               </button>
                             </div>
                             {b.notes ? (

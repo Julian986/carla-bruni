@@ -2,6 +2,8 @@
  * Reglas de bloqueo de agenda sin dependencias de Node/Mongo (seguro para Client Components).
  */
 
+import { isSystemWeekdayClosureBlock } from "@/lib/booking/weekday-closure-blocks-shared";
+
 export type AgendaBlockScope = "salon" | "chair_1" | "chair_2";
 
 export type AgendaBlockRecurrence =
@@ -61,4 +63,80 @@ export function formatAgendaBlockTimeRange(timeLocal: string, durationMinutes: n
   const startM = Number(match[1]) * 60 + Number(match[2]);
   const endM = startM + Math.round(durationMinutes);
   return `${minutesToHhmmLocal(startM)} – ${minutesToHhmmLocal(endM)}`;
+}
+
+/** Clave para agrupar bloqueos que se ven iguales en el detalle de un día. */
+export function agendaBlockVisualGroupKey(block: {
+  timeLocal: string;
+  durationMinutes: number;
+  scope: string;
+  blockedTreatmentIds?: string[] | null;
+  createdBy?: string | null;
+  notes?: string | null;
+}): string {
+  const ids = [...(block.blockedTreatmentIds ?? [])].filter(Boolean).sort();
+  const habitual = isSystemWeekdayClosureBlock(block);
+  return `${block.timeLocal}|${block.durationMinutes}|${block.scope}|${ids.join(",")}|${habitual ? "habitual" : "block"}`;
+}
+
+export type AgendaBlockDisplayGroup<T extends { id: string }> = {
+  representative: T;
+  members: T[];
+};
+
+function pickAgendaBlockRepresentative<T extends { id: string; recurrence: AgendaBlockRecurrence; createdBy?: string | null; notes?: string | null }>(
+  members: T[],
+): T {
+  const habitual = members.find((m) => isSystemWeekdayClosureBlock(m));
+  if (habitual) return habitual;
+  const weekly = members.filter((m) => m.recurrence?.type === "weekly");
+  if (weekly.length > 0) {
+    const openEnded = weekly.find((m) => !m.recurrence?.untilDateKey?.trim());
+    if (openEnded) return openEnded;
+    return [...weekly].sort((a, b) =>
+      (a.recurrence?.untilDateKey ?? "").localeCompare(b.recurrence?.untilDateKey ?? ""),
+    )[0]!;
+  }
+  return members[0]!;
+}
+
+/** Varias reglas en DB que aplican igual ese día → una tarjeta en el panel. */
+export function groupAgendaBlocksForDayDisplay<T extends {
+  id: string;
+  timeLocal: string;
+  durationMinutes: number;
+  scope: string;
+  blockedTreatmentIds?: string[] | null;
+  recurrence: AgendaBlockRecurrence;
+  createdBy?: string | null;
+  notes?: string | null;
+}>(blocks: T[]): AgendaBlockDisplayGroup<T>[] {
+  const map = new Map<string, T[]>();
+  for (const b of blocks) {
+    const key = agendaBlockVisualGroupKey(b);
+    const list = map.get(key) ?? [];
+    list.push(b);
+    map.set(key, list);
+  }
+  return [...map.values()].map((members) => ({
+    members,
+    representative: pickAgendaBlockRepresentative(members),
+  }));
+}
+
+/** Etiqueta de recurrencia cuando hay varios bloqueos agrupados. */
+export function agendaBlockGroupedRecurrenceLabel(
+  members: { recurrence: AgendaBlockRecurrence }[],
+): string | null {
+  const weekly = members.filter((m) => m.recurrence?.type === "weekly");
+  if (weekly.length === 0) return null;
+  const untilKeys = new Set(
+    weekly.map((m) => m.recurrence?.untilDateKey?.trim() ?? "").filter((u) => u.length > 0),
+  );
+  if (untilKeys.size === 0) return "Semanal";
+  if (untilKeys.size === 1) {
+    const until = [...untilKeys][0]!;
+    return `Semanal hasta ${until}`;
+  }
+  return "Semanal · varias reglas";
 }
