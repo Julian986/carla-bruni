@@ -14,25 +14,25 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
     name: "Mariela Provasi",
     quote:
       "Excelente atención desde el primer momento. Es muy profesional, cuidadosa e higiénica. Me asesoró según mi tipo de piel y los resultados fueron visibles desde la primera sesión. Se nota su formación, experiencia y ama lo que hace. 100% recomendable.",
-    imageSrc: "/testimonios/mariela.png",
+    imageSrc: "/testimonios/mariela.webp",
   },
   {
     name: "Constanza Castillo",
     quote:
       "Excelente atención, en un lugar pensado especialmente para nosotras y el cuidado que cada una necesitamos! Bienestar en todos los aspectos! Amoo este lugar",
-    imageSrc: "/testimonios/constanza.png",
+    imageSrc: "/testimonios/constanza.webp",
   },
   {
     name: "Celene",
     quote:
       "Excelente atención! Hermoso espacio y gran variedad de servicios. Las chicas son divinas, siempre con una sonrisa y dispuestas a asesorarte en lo que necesites. 100% recomendable💕",
-    imageSrc: "/testimonios/celene.png",
+    imageSrc: "/testimonios/celene.webp",
   },
   {
     name: "Lorena Lovato",
     quote:
       "Hace años conozco a Carla y su dulzura… buena predisposición y profesionalismo hacen que la siga eligiendo día a día… El espacio, por demás confortable… para sentirse única, mimada en las mejores manos.",
-    imageSrc: "/testimonios/lorena.png",
+    imageSrc: "/testimonios/lorena.webp",
   },
   {
     name: "Maria Claudia Shedden",
@@ -43,19 +43,19 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
     name: "Maria Cecilia Juan",
     quote:
       "Desde que me atiende noté una mejora enorme en mi piel. Es súper dedicada, explica todo con claridad y transmite mucha confianza. El espacio es hermoso, cuidado y se siente un clima de bienestar desde que entrás. Sin dudas, la recomiendo 💖✨",
-    imageSrc: "/testimonios/maria_cecilia.png",
+    imageSrc: "/testimonios/maria_cecilia.webp",
   },
   {
     name: "Laura Gonzalez",
     quote:
       "Hace 1 año que Carla me atiende; realiza un trabajo profesional y dedicado. Además, un trato excelente y su nuevo espacio es excelente.",
-    imageSrc: "/testimonios/laura_gonzalez.png",
+    imageSrc: "/testimonios/laura_gonzalez.webp",
   },
   {
     name: "Daichu Mattos",
     quote:
       "Bellísimo el lugar y confortable. La atención de Carla es excelente y muy consciente en su trabajo, que lo hace con amor y dedicación.",
-    imageSrc: "/testimonios/daichu_mattos.png",
+    imageSrc: "/testimonios/daichu_mattos.webp",
   },
   {
     name: "Claudia Diaz",
@@ -66,7 +66,7 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
     name: "Susana Tolarechipi",
     quote:
       "Muy buena experiencia!! Carla Bruni es una excelente profesional que ama su trabajo y da lo mejor en cada práctica; los resultados de los tratamientos se observan a corto plazo!! La recomiendo plenamente!!",
-    imageSrc: "/testimonios/susana_tolarechipi.png",
+    imageSrc: "/testimonios/susana_tolarechipi.webp",
   },
   {
     name: "Maria Victoria",
@@ -86,19 +86,19 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
     name: "Mariela Montecino",
     quote:
       "El espacio es hermoso, lleno de mucho amor 😍 ni hablar de Carla que es una genia total ❤️\nSúper dulce con sus tratamientos.",
-    imageSrc: "/testimonios/mariela_ontecino.png",
+    imageSrc: "/testimonios/mariela_ontecino.webp",
   },
   {
     name: "Uschi Banki",
     quote:
       "Carla es una excelente profesional y excelente persona! Cada tratamiento que elijo hacerme ahí tiene efectos extraordinarios y visibles!\nSiempre te explica el paso a paso, y lo más importante, los fundamentos científicos de cada técnica.\nTe explica de manera sencilla los pros y contras en tal caso de que quieras hacerte algo que ella no practica!\n¡Muy profesional!\n¡Pongo mi cara y cuerpo en sus manos!\nAdemás los productos que comercializa son un 10!\nGracias Carla 🫶🏻",
-    imageSrc: "/testimonios/uschi_banki.png",
+    imageSrc: "/testimonios/uschi_banki.webp",
   },
   {
     name: "Adriana Mirazo",
     quote:
       "Ese espacio del bien… Carla es la mejor, siempre actualizada con los tratamientos, generosa y con muy buena energía. ¡Su lugar es impecable!",
-    imageSrc: "/testimonios/adriana_mirazo.png",
+    imageSrc: "/testimonios/adriana_mirazo.webp",
   },
   {
     name: "Carolina Segura",
@@ -108,7 +108,7 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
   {
     name: "Lorena Cassanelli",
     quote: "Carlita, una genia. ¡Excelente atención! Súper recomendable. ❤️",
-    imageSrc: "/testimonios/lorena_cassanelli.png",
+    imageSrc: "/testimonios/lorena_cassanelli.webp",
   },
   {
     name: "Pamela Altamirano",
@@ -118,7 +118,7 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
     name: "Vanesa Beatriz Rodriguez",
     quote:
       "Un lugar muy cálido.\nManos sutiles que cuidan de tu cara (en mi caso).\nMuy bien asesorada con respecto a la piel.",
-    imageSrc: "/testimonios/vanesa_beatriz_rodriguez.png",
+    imageSrc: "/testimonios/vanesa_beatriz_rodriguez.webp",
   },
   {
     name: "Maria Sol Sepulveda",
@@ -128,7 +128,7 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
   {
     name: "Ana Maria Coppolillo",
     quote: "Totalmente recomendable, un espacio muy cálido y Carla es la mejor profesional!!!",
-    imageSrc: "/testimonios/ana_maria_coppolillo.png",
+    imageSrc: "/testimonios/ana_maria_coppolillo.webp",
   },
   {
     name: "Marcela Miño",
@@ -138,23 +138,23 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
     name: "Laura Giner",
     quote:
       "Carla es sumamente profesional. Cuenta con aparatología de última generación. La atención que brinda es de lo más agradable. Siempre con atención personalizada.",
-    imageSrc: "/testimonios/laura_giner.png",
+    imageSrc: "/testimonios/laura_giner.webp",
   },
   {
     name: "Romina Gisela Baiotti",
     quote:
       "¡Súper recomendable! Carlita es la número uno 🫶🏼 tanto en lo profesional como en el confort que ofrece en su espacio.",
-    imageSrc: "/testimonios/romina_gisela_baiotti.png",
+    imageSrc: "/testimonios/romina_gisela_baiotti.webp",
   },
   {
     name: "Jessica Cabada",
     quote: "Excelente atención y servicio.\nCarla, un amor de persona… ❤️",
-    imageSrc: "/testimonios/jessica_cabada.png",
+    imageSrc: "/testimonios/jessica_cabada.webp",
   },
   {
     name: "Diabetes Salud",
     quote: "Una genia Carlita, súper profesional y buena persona.",
-    imageSrc: "/testimonios/diabetes_salud.png",
+    imageSrc: "/testimonios/diabetes_salud.webp",
   },
   {
     name: "Jardín Maternal Modelo",
@@ -180,25 +180,25 @@ export const HOME_TESTIMONIALS: HomeTestimonial[] = [
   {
     name: "Zio",
     quote: "¡Recomiendo! Muy profesional.",
-    imageSrc: "/testimonios/zio.png",
+    imageSrc: "/testimonios/zio.webp",
   },
   {
     name: "Evelina Martin",
     quote:
       "Una genia, todo lo que sabe en el cuidado de la piel; tiene las mejores máquinas, cremas y consejos para el cuidado diario. El estacionamiento es un plus: llegás, lo dejás y subís. Carlita, la mejor de Mar del Plata, ¡lejos!",
-    imageSrc: "/testimonios/evelina_martin.png",
+    imageSrc: "/testimonios/evelina_martin.webp",
   },
   {
     name: "Monica Patricia Farro",
-    imageSrc: "/testimonios/monica_patricia_farro.png",
+    imageSrc: "/testimonios/monica_patricia_farro.webp",
   },
   {
     name: "Romina Dasse",
     quote: "La mejor lejos!!",
-    imageSrc: "/testimonios/romina_dasse.png",
+    imageSrc: "/testimonios/romina_dasse.webp",
   },
   {
     name: "Veronica Leal",
-    imageSrc: "/testimonios/veronica_leal.png",
+    imageSrc: "/testimonios/veronica_leal.webp",
   },
 ];
